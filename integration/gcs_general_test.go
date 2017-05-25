@@ -17,11 +17,18 @@ const BucketEnv = "BUCKET_NAME"
 const NoBucketMsg = "environment variable %s expected to contain a valid Google Cloud Storage bucket but was empty"
 
 var _ = Describe("Integration", func() {
-	Context("with us-east-1, REGIONA (Default Applicaton Credentials) configuration", func() {
+	Context("general (Default Applicaton Credentials) configuration", func() {
 		bucketName := os.Getenv(BucketEnv)
+
+		var ctx AssertContext
 		BeforeEach(func() {
 			Expect(bucketName).ToNot(BeEmpty(),
 				fmt.Sprintf(NoBucketMsg, BucketEnv))
+
+			ctx = NewAssertContext()
+		})
+		AfterEach(func() {
+			ctx.Cleanup()
 		})
 
 		configurations := []TableEntry{
@@ -32,7 +39,36 @@ var _ = Describe("Integration", func() {
 
 		DescribeTable("Blobstore lifecycle works",
 			func(config *config.GCSCli) {
-				AssertLifecycleWorks(gcsCLIPath, config)
+				ctx.AddConfig(config)
+				AssertLifecycleWorks(gcsCLIPath, ctx)
+			},
+			configurations...)
+
+		DescribeTable("Invalid Delete works",
+			func(config *config.GCSCli) {
+				ctx.AddConfig(config)
+				AssertDeleteNonexistentWorks(gcsCLIPath, ctx)
+			},
+			configurations...)
+
+		DescribeTable("Multipart Put works",
+			func(config *config.GCSCli) {
+				ctx.AddConfig(config)
+				AssertMultipartPutWorks(gcsCLIPath, ctx)
+			},
+			configurations...)
+
+		DescribeTable("Invalid Put should fail",
+			func(config *config.GCSCli) {
+				ctx.AddConfig(config)
+				AssertOnPutFails(gcsCLIPath, ctx)
+			},
+			configurations...)
+
+		DescribeTable("Invalid Get should fail",
+			func(config *config.GCSCli) {
+				ctx.AddConfig(config)
+				AssertGetNonexistentFails(gcsCLIPath, ctx)
 			},
 			configurations...)
 	})

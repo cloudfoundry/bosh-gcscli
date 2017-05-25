@@ -69,6 +69,12 @@ clean-gcs:
 test-unit:
 	ginkgo -r -skipPackage integration
 
-# Perform all tests including integration tests.
+# Perform all tests, including integration tests.
 test-int: get-deps clean fmt lint vet build prep-gcs
 	 export BUCKET_NAME="$$(cat multiregional.lock)" && ginkgo -r
+
+# Perform all non-long tests, including integration tests.
+test-fast-int: get-deps clean fmt lint vet build prep-gcs
+	 export BUCKET_NAME="$$(cat multiregional.lock)" &&  \
+	 export SKIP_LONG_TESTS="yes" && \
+	 ginkgo -r
