@@ -8,7 +8,7 @@ import (
 
 	"time"
 
-	"github.com/Everlag/gcscli/config"
+	"github.com/cloudfoundry/bosh-gcscli/config"
 	"github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/gexec"

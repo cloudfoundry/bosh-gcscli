@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Everlag/gcscli/config"
+	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"

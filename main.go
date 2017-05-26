@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/Everlag/gcscli/client"
-	"github.com/Everlag/gcscli/config"
+	"github.com/cloudfoundry/bosh-gcscli/client"
+	"github.com/cloudfoundry/bosh-gcscli/config"
 )
 
 var version string

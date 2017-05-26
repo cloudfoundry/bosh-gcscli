@@ -3,7 +3,7 @@ package config_test
 import (
 	"bytes"
 
-	. "github.com/Everlag/gcscli/config"
+	. "github.com/cloudfoundry/bosh-gcscli/config"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"

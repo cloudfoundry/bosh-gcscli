@@ -6,7 +6,7 @@ import (
 	"google.golang.org/api/option"
 
 	"cloud.google.com/go/storage"
-	"github.com/Everlag/gcscli/config"
+	"github.com/cloudfoundry/bosh-gcscli/config"
 )
 
 const uaString = "gcscli"

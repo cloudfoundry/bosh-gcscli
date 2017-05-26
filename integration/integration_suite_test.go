@@ -18,7 +18,7 @@ func TestIntegration(t *testing.T) {
 var _ = BeforeSuite(func() {
 	// Integration test against the CLI means we need the binary.
 	var err error
-	gcsCLIPath, err = gexec.Build("github.com/Everlag/gcscli")
+	gcsCLIPath, err = gexec.Build("github.com/cloudfoundry/bosh-gcscli")
 	Expect(err).ShouldNot(HaveOccurred())
 })
 

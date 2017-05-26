@@ -9,7 +9,7 @@ import (
 	"log"
 
 	"cloud.google.com/go/storage"
-	"github.com/Everlag/gcscli/config"
+	"github.com/cloudfoundry/bosh-gcscli/config"
 )
 
 // GCSBlobstore encapsulates interaction with the GCS blobstore
