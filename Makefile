@@ -85,10 +85,13 @@ test-unit:
 
 # Perform all tests, including integration tests.
 test-int: get-deps clean fmt lint vet build prep-gcs
-	 export BUCKET_NAME="$$(cat multiregional.lock)" && ginkgo -r
+	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
+	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
+	 ginkgo -r
 
 # Perform all non-long tests, including integration tests.
 test-fast-int: get-deps clean fmt lint vet build prep-gcs
-	 export BUCKET_NAME="$$(cat multiregional.lock)" &&  \
+	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
+	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export SKIP_LONG_TESTS="yes" && \
 	 ginkgo -r

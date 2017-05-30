@@ -28,26 +28,16 @@ import (
 
 var _ = Describe("BlobstoreClient configuration", func() {
 	Describe("checking that location or storage_class has been set", func() {
-		Context("when neither location and storage_class have been set", func() {
-			dummyJSONBytes := []byte(`{"bucket_name": "some-bucket"}`)
-			dummyJSONReader := bytes.NewReader(dummyJSONBytes)
-
-			It("defaults to US and MULTI_REGIONAL", func() {
-				c, err := NewFromReader(dummyJSONReader)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(c.Location).To(Equal("us"))
-				Expect(c.StorageClass).To(Equal("MULTI_REGIONAL"))
-			})
-		})
-
 		Context("when storage_class has been set to MULTI_REGIONAL", func() {
 			dummyJSONBytes := []byte(`{"storage_class":"MULTI_REGIONAL","bucket_name": "some-bucket"}`)
 			dummyJSONReader := bytes.NewReader(dummyJSONBytes)
 
-			It("defaults to US", func() {
+			It("US is compatible location", func() {
 				c, err := NewFromReader(dummyJSONReader)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c.Location).To(Equal("us"))
+				err = c.FitCompatibleLocation("US")
+				Expect(err).ToNot(HaveOccurred())
+
 			})
 		})
 
@@ -55,67 +45,66 @@ var _ = Describe("BlobstoreClient configuration", func() {
 			dummyJSONBytes := []byte(`{"storage_class":"REGIONAL","bucket_name": "some-bucket"}`)
 			dummyJSONReader := bytes.NewReader(dummyJSONBytes)
 
-			It("defaults to us-east1", func() {
+			It("us-east1 is compatible location", func() {
 				c, err := NewFromReader(dummyJSONReader)
 				Expect(err).ToNot(HaveOccurred())
-				Expect(c.Location).To(Equal("us-east1"))
+				err = c.FitCompatibleLocation("US-EAST1")
+				Expect(err).ToNot(HaveOccurred())
 			})
 		})
 
-		Context("when location has been set to us", func() {
-			dummyJSONBytes := []byte(`{"location":"us","bucket_name": "some-bucket"}`)
+		Context("when location has been set to US", func() {
+			dummyJSONBytes := []byte(`{"bucket_name": "some-bucket"}`)
 			dummyJSONReader := bytes.NewReader(dummyJSONBytes)
 
 			It("defaults to MULTI_REGIONAL", func() {
 				c, err := NewFromReader(dummyJSONReader)
 				Expect(err).ToNot(HaveOccurred())
+				err = c.FitCompatibleLocation("US")
+				Expect(err).ToNot(HaveOccurred())
 				Expect(c.StorageClass).To(Equal("MULTI_REGIONAL"))
 			})
 		})
 
-		Context("when location has been set to us-west1", func() {
-			dummyJSONBytes := []byte(`{"location":"us-west1","bucket_name": "some-bucket"}`)
+		Context("when location has been set to US-WEST1", func() {
+			dummyJSONBytes := []byte(`{"bucket_name": "some-bucket"}`)
 			dummyJSONReader := bytes.NewReader(dummyJSONBytes)
 
 			It("defaults to REGIONAL", func() {
 				c, err := NewFromReader(dummyJSONReader)
+				Expect(err).ToNot(HaveOccurred())
+				err = c.FitCompatibleLocation("US-WEST1")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(c.StorageClass).To(Equal("REGIONAL"))
 			})
 		})
 
 		DescribeTable("invalid storage_class and location combinations",
-			func(dummyJSON string, expected error) {
+			func(dummyJSON, loc string, expected error) {
 				dummyJSONBytes := []byte(dummyJSON)
 				dummyJSONReader := bytes.NewReader(dummyJSONBytes)
 
-				_, err := NewFromReader(dummyJSONReader)
+				c, err := NewFromReader(dummyJSONReader)
+				Expect(err).ToNot(HaveOccurred())
+				err = c.FitCompatibleLocation(loc)
 				Expect(err).To(MatchError(expected))
 			},
 			Entry("storage_class is MULTI_REGIONAL and location is regional",
-				`{"storage_class": "MULTI_REGIONAL", "location":"us-west1","bucket_name": "some-bucket"}`,
+				`{"storage_class": "MULTI_REGIONAL","bucket_name": "some-bucket"}`,
+				"US-WEST1",
 				ErrBadLocationStorageClass),
 			Entry("storage_class is REGIONAL and location is multi-regional",
-				`{"storage_class": "REGIONAL", "location":"us","bucket_name": "some-bucket"}`,
+				`{"storage_class": "REGIONAL","bucket_name": "some-bucket"}`,
+				"US",
 				ErrBadLocationStorageClass),
 			Entry("storage_class is unknown",
 				`{"storage_class": "asdasdasd","bucket_name": "some-bucket"}`,
+				"US",
 				ErrUnknownStorageClass),
 			Entry("location is unknown",
-				`{"location": "asdasdasd","bucket_name": "some-bucket"}`,
+				`{"bucket_name": "some-bucket"}`,
+				"asdasdasd",
 				ErrUnknownLocation))
-
-		Context("when storage_class has been set to MULTI_REGIONAL and location has been set to eu", func() {
-			dummyJSONBytes := []byte(`{"storage_class": "MULTI_REGIONAL", "location":"eu","bucket_name": "some-bucket"}`)
-			dummyJSONReader := bytes.NewReader(dummyJSONBytes)
-
-			It("uses them", func() {
-				c, err := NewFromReader(dummyJSONReader)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(c.Location).To(Equal("eu"))
-				Expect(c.StorageClass).To(Equal("MULTI_REGIONAL"))
-			})
-		})
 	})
 
 	Describe("when bucket is not specified", func() {

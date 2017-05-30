@@ -26,20 +26,24 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-const BucketEnv = "BUCKET_NAME"
+const RegionalBucketEnv = "REGIONAL_BUCKET_NAME"
+const MultiRegionalBucketEnv = "MULTIREGIONAL_BUCKET_NAME"
 
-// NoBucketMsg is the template used when BucketEnv's environment variable
+// NoBucketMsg is the template used when a BucketEnv's environment variable
 // has not been populated.
 const NoBucketMsg = "environment variable %s expected to contain a valid Google Cloud Storage bucket but was empty"
 
 var _ = Describe("Integration", func() {
 	Context("general (Default Applicaton Credentials) configuration", func() {
-		bucketName := os.Getenv(BucketEnv)
+		regional := os.Getenv(RegionalBucketEnv)
+		multiRegional := os.Getenv(MultiRegionalBucketEnv)
 
 		var ctx AssertContext
 		BeforeEach(func() {
-			Expect(bucketName).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, BucketEnv))
+			Expect(regional).ToNot(BeEmpty(),
+				fmt.Sprintf(NoBucketMsg, RegionalBucketEnv))
+			Expect(multiRegional).ToNot(BeEmpty(),
+				fmt.Sprintf(NoBucketMsg, MultiRegionalBucketEnv))
 
 			ctx = NewAssertContext()
 		})
@@ -48,8 +52,19 @@ var _ = Describe("Integration", func() {
 		})
 
 		configurations := []TableEntry{
-			Entry("with minimal config", &config.GCSCli{
-				BucketName: bucketName,
+			Entry("MultiRegional bucket, default StorageClass", &config.GCSCli{
+				BucketName: multiRegional,
+			}),
+			Entry("Regional bucket, default StorageClass", &config.GCSCli{
+				BucketName: regional,
+			}),
+			Entry("MultiRegional bucket, explicit StorageClass", &config.GCSCli{
+				BucketName:   multiRegional,
+				StorageClass: "MULTI_REGIONAL",
+			}),
+			Entry("Regional bucket, explicit StorageClass", &config.GCSCli{
+				BucketName:   regional,
+				StorageClass: "REGIONAL",
 			}),
 		}
 
@@ -77,7 +92,7 @@ var _ = Describe("Integration", func() {
 		DescribeTable("Invalid Put should fail",
 			func(config *config.GCSCli) {
 				ctx.AddConfig(config)
-				AssertOnPutFails(gcsCLIPath, ctx)
+				AssertBrokenSourcePutFails(gcsCLIPath, ctx)
 			},
 			configurations...)
 

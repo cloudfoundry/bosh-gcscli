@@ -198,8 +198,8 @@ func (brs *badReadSeeker) Seek(offset int64, whenc int) (n int64, err error) {
 	return 0, badReadSeekerErr
 }
 
-// AssertOnPutFails tests that a broken upload will cause a failure
-func AssertOnPutFails(gcsCLIPath string, ctx AssertContext) {
+// AssertBrokenSourcePutFails tests that a broken upload will cause a failure
+func AssertBrokenSourcePutFails(gcsCLIPath string, ctx AssertContext) {
 	_, gcsClient, err := client.NewSDK(*ctx.Config)
 	Expect(err).ToNot(HaveOccurred())
 	blobstoreClient, err := client.New(context.Background(),
@@ -218,4 +218,13 @@ func AssertGetNonexistentFails(gcsCLIPath string, ctx AssertContext) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(session.ExitCode()).ToNot(BeZero())
 	Expect(session.Err.Contents()).To(ContainSubstring("object doesn't exist"))
+}
+
+// AssertPutFails tests that whatever context is passed will cause a put
+// operation to fail.
+func AssertPutFails(gcsCLIPath string, ctx AssertContext) {
+	session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+		"put", ctx.ContentFile, ctx.GCSFileName)
+	Expect(err).ToNot(HaveOccurred())
+	Expect(session.ExitCode()).ToNot(BeZero())
 }

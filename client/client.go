@@ -36,6 +36,17 @@ type GCSBlobstore struct {
 	config *config.GCSCli
 }
 
+// checkLocation determines if the configured StorageClass of the
+// GCSBlobstore is compatible with the configured bucket's location.
+func (client *GCSBlobstore) checkLocation() error {
+	bucket := client.client.Bucket(client.config.BucketName)
+	attrs, err := bucket.Attrs(context.Background())
+	if err != nil {
+		return err
+	}
+	return client.config.FitCompatibleLocation(attrs.Location)
+}
+
 // getObjectHandle returns a handle to an object at src.
 func (client GCSBlobstore) getObjectHandle(src string) *storage.ObjectHandle {
 	return client.client.Bucket(client.config.BucketName).Object(src)
@@ -44,7 +55,8 @@ func (client GCSBlobstore) getObjectHandle(src string) *storage.ObjectHandle {
 // New returns a BlobstoreClient configured to operate using the given config
 // and client.
 //
-// The error is returned by s3cli/client convention.
+// non-nil error is returned on invalid client or config. If the configuration
+// is incompatible with the GCS bucket, a non-nil error is also returned.
 func New(ctx context.Context, gcsClient *storage.Client,
 	gcscliConfig *config.GCSCli) (GCSBlobstore, error) {
 	if gcsClient == nil {
@@ -55,7 +67,8 @@ func New(ctx context.Context, gcsClient *storage.Client,
 		return GCSBlobstore{},
 			errors.New("nil config causes invalid blobstore")
 	}
-	return GCSBlobstore{gcsClient, gcscliConfig}, nil
+	blobstore := GCSBlobstore{gcsClient, gcscliConfig}
+	return blobstore, blobstore.checkLocation()
 }
 
 // Get fetches a blob from the GCS blobstore.
@@ -77,6 +90,7 @@ func (client GCSBlobstore) Get(src string, dest io.Writer) error {
 // TODO: implement retry
 func (client GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 	remoteWriter := client.getObjectHandle(dest).NewWriter(context.Background())
+	remoteWriter.ObjectAttrs.StorageClass = client.config.StorageClass
 	if _, err := io.Copy(remoteWriter, src); err != nil {
 		log.Println("Upload failed", err.Error())
 		return fmt.Errorf("upload failure: %s", err.Error())

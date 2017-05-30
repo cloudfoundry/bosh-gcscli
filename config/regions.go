@@ -22,22 +22,22 @@ import (
 
 // GCSRegionalLocations are the valid locations for a regional bucket.
 var GCSRegionalLocations = map[string]struct{}{
-	"us-central1":     struct{}{},
-	"us-east1":        struct{}{},
-	"us-west1":        struct{}{},
-	"us-east4":        struct{}{},
-	"europe-west1":    struct{}{},
-	"asia-east1":      struct{}{},
-	"asia-northeast1": struct{}{},
-	"asia-southeast1": struct{}{},
+	"US-CENTRAL1":     struct{}{},
+	"US-EAST1":        struct{}{},
+	"US-WEST1":        struct{}{},
+	"US-EAST4":        struct{}{},
+	"EUROPE-WEST1":    struct{}{},
+	"ASIA-EAST1":      struct{}{},
+	"ASIA-NORTHEAST1": struct{}{},
+	"ASIA-SOUTHEAST1": struct{}{},
 }
 
 // GCSMultiRegionalLocations are the valid locations for
 // a multi-regional bucket
 var GCSMultiRegionalLocations = map[string]struct{}{
-	"asia": struct{}{},
-	"eu":   struct{}{},
-	"us":   struct{}{},
+	"ASIA": struct{}{},
+	"EU":   struct{}{},
+	"US":   struct{}{},
 }
 
 const (

@@ -29,19 +29,14 @@ type GCSCli struct {
 	// CredentialsSource is the location of a Service Account File.
 	// If left empty, Application Default Credentials will be used.
 	CredentialsSource string `json:"credentials_source"`
-	// StorageClass is the style of storage used for the bucket if it needs
-	// to be created.
+	// StorageClass is the type of storage used for objects added to the bucket
 	// https://cloud.google.com/storage/docs/storage-classes
 	StorageClass string `json:"storage_class"`
-	// Location is the location of the remote bucket if it needs to be
-	// created.
-	// https://cloud.google.com/storage/docs/bucket-locations
-	Location string `json:"location"`
 }
 
 const (
-	defaultRegionalLocation          = "us-east1"
-	defaultMultiRegionalLocation     = "us"
+	defaultRegionalLocation          = "US-EAST1"
+	defaultMultiRegionalLocation     = "US"
 	defaultRegionalStorageClass      = "REGIONAL"
 	defaultMultiRegionalStorageClass = "MULTI_REGIONAL"
 )
@@ -63,21 +58,8 @@ func getDefaultStorageClass(location string) (string, error) {
 	return "", ErrUnknownLocation
 }
 
-// getDefaultStorageClass returns the default Location for a given StorageClass.
-// This takes into account regional/multi-regional incompatibility.
-//
-// Empty string is returned if the location cannot be matched.
-func getDefaultLocation(storageClass string) (string, error) {
-	if storageClass == regional {
-		return defaultRegionalLocation, nil
-	} else if _, ok := GCSStorageClass[storageClass]; ok {
-		return defaultMultiRegionalLocation, nil
-	}
-	return "", ErrUnknownStorageClass
-}
-
 // NewFromReader returns the new gcscli configuration struct from the
-// contents of the reader. Empty fields will be populated with sane defaults.
+// contents of the reader.
 //
 // reader.Read() is expected to return valid JSON.
 func NewFromReader(reader io.Reader) (GCSCli, error) {
@@ -92,24 +74,32 @@ func NewFromReader(reader io.Reader) (GCSCli, error) {
 		return GCSCli{}, ErrEmptyBucketName
 	}
 
-	if c.StorageClass == "" && c.Location == "" {
-		c.Location = defaultMultiRegionalLocation
-		c.StorageClass = defaultMultiRegionalStorageClass
-	}
-
-	var err error
-	if c.StorageClass == "" {
-		c.StorageClass, err = getDefaultStorageClass(c.Location)
-	} else if c.Location == "" {
-		c.Location, err = getDefaultLocation(c.StorageClass)
-	}
-	if err != nil {
-		return GCSCli{}, err
-	}
-
-	if err := validLocationStorageClass(c.Location, c.StorageClass); err != nil {
-		return GCSCli{}, err
-	}
-
 	return c, nil
+}
+
+// FitCompatibleLocation returns whether a provided Location
+// can have c.StorageClass objects written to it.
+//
+// When c.StorageClass is empty, a compatible default is filled in.
+//
+// nil return value when compatible, otherwise a non-nil explanation.
+func (c *GCSCli) FitCompatibleLocation(loc string) error {
+	if c.StorageClass == "" {
+		var err error
+		if c.StorageClass, err = getDefaultStorageClass(loc); err != nil {
+			return err
+		}
+	}
+
+	_, regional := GCSRegionalLocations[loc]
+	_, multiRegional := GCSMultiRegionalLocations[loc]
+	if !(regional || multiRegional) {
+		return ErrUnknownLocation
+	}
+
+	if _, ok := GCSStorageClass[c.StorageClass]; !ok {
+		return ErrUnknownStorageClass
+	}
+
+	return validLocationStorageClass(loc, c.StorageClass)
 }
