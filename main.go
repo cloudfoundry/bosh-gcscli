@@ -28,14 +28,68 @@ import (
 
 var version string
 
+// usageExample provides examples of how to use the CLI.
+//
+// This is used when printing the help text.
+const usageExample = `
+# Usage
+bosh-gcscli --help
+
+# Command: "put"
+# Upload a blob to the GCS blobstore.
+bosh-gcscli -c config.json put <path/to/file> <remote-blob>
+
+# Command: "get"
+# Fetch a blob from the GCS blobstore.
+# Destination file will be overwritten if exists.
+bosh-gcscli -c config.json get <remote-blob> <path/to/file>
+
+# Command: "delete"
+# Remove a blob from the GCS blobstore.
+bosh-gcscli -c config.json delete <remote-blob>
+
+# Command: "exists"
+# Checks if blob exists in the GCS blobstore.
+bosh-gcscli -c config.json exists <remote-blob>`
+
+var (
+	showVer    = flag.Bool("v", false, "Print CLI version")
+	shortHelp  = flag.Bool("h", false, "Print this help text")
+	longHelp   = flag.Bool("help", false, "Print this help text")
+	configPath = flag.String("c", "",
+		`JSON config file (ie, config.json).
+	{
+		"bucket_name":        "name of GCS bucket (required)",
+
+		"credentials_source": "path to JSON service account key
+		                       (optional, defaults to Application Default Credentials)",
+		"storage_class":      "storage class for objects
+		                       (optional, defaults to bucket settings)",
+	}
+
+	storage_class is one of MULTI_REGIONAL, REGIONAL, NEARLINE, or COLDLINE.
+	See the docs for characteristics and location compatibility.
+	https://cloud.google.com/storage/docs/storage-classes
+`)
+)
+
 func main() {
-	configPath := flag.String("c", "", "configuration path")
-	showVer := flag.Bool("v", false, "version")
 	flag.Parse()
 
 	if *showVer {
 		fmt.Printf("version %s\n", version)
 		os.Exit(0)
+	}
+
+	if *shortHelp || *longHelp {
+		flag.Usage()
+		fmt.Println(usageExample)
+		os.Exit(0)
+	}
+
+	if *configPath == "" {
+		fmt.Println("no config file provided\nSee -help for usage")
+		os.Exit(1)
 	}
 
 	configFile, err := os.Open(*configPath)
