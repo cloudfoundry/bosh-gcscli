@@ -21,6 +21,7 @@ build:
 # Fetch base dependencies as well as testing packages
 get-deps:
 	go get
+	go get github.com/golang/lint/golint
 	# Ginkgo and omega test tools
 	go get github.com/onsi/ginkgo/ginkgo
 	go get github.com/onsi/gomega
@@ -53,7 +54,7 @@ regional.lock:
 # Create a bucket using the name located in $StorageClass.lock with
 # a sane location.
 regional-bucket: regional.lock
-	@gsutil ls | grep "$$(cat regional.lock)"&> /dev/null; if [ $$? -ne 0 ]; then \
+	@gsutil ls | grep -q "$$(cat regional.lock)"; if [ $$? -ne 0 ]; then \
 		gsutil mb -c REGIONAL -l us-east1 "gs://$$(cat regional.lock)"; \
 	fi
 
@@ -64,7 +65,7 @@ multiregional.lock:
 	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > multiregional.lock
 
 multiregional-bucket: multiregional.lock
-	@gsutil ls | grep "$$(cat multiregional.lock)"&> /dev/null; if [ $$? -ne 0 ]; then \
+	@gsutil ls | grep -q "$$(cat multiregional.lock)"; if [ $$? -ne 0 ]; then \
 		gsutil mb -c MULTI_REGIONAL -l us "gs://$$(cat multiregional.lock)"; \
 	fi
 
@@ -80,7 +81,7 @@ clean-gcs:
 	rm multiregional.lock
 
 # Perform only unit tests
-test-unit:
+test-unit: get-deps clean fmt lint vet build
 	ginkgo -r -skipPackage integration
 
 # Perform all tests, including integration tests.
