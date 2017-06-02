@@ -149,6 +149,51 @@ var _ = Describe("BlobstoreClient configuration", func() {
 		})
 	})
 
+	Describe("when encryption_key is specified", func() {
+		// encryption_key = []byte{0, 1, 2, ..., 31} as base64
+		dummyJSONBytes := []byte(`{"encryption_key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=", "bucket_name": "some-bucket"}`)
+		dummyJSONReader := bytes.NewReader(dummyJSONBytes)
+
+		It("uses the given key", func() {
+			c, err := NewFromReader(dummyJSONReader)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(len(c.EncryptionKey)).To(Equal(32))
+		})
+	})
+
+	Describe("when encryption_key is too long", func() {
+		// encryption_key = []byte{0, 1, 2, ..., 31, 32} as base64
+		dummyJSONBytes := []byte(`{"encryption_key": "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8g", "bucket_name": "some-bucket"}`)
+		dummyJSONReader := bytes.NewReader(dummyJSONBytes)
+
+		It("returns an error", func() {
+			_, err := NewFromReader(dummyJSONReader)
+			Expect(err).To(Equal(ErrWrongLengthEncryptionKey))
+		})
+	})
+
+	Describe("when encryption_key is malformed", func() {
+		// encryption_key is not valid base64
+		dummyJSONBytes := []byte(`{"encryption_key": "zzz", "bucket_name": "some-bucket"}`)
+		dummyJSONReader := bytes.NewReader(dummyJSONBytes)
+
+		It("returns an error", func() {
+			_, err := NewFromReader(dummyJSONReader)
+			Expect(err).ToNot(BeNil())
+		})
+	})
+
+	Describe("when encryption_key is not specified", func() {
+		dummyJSONBytes := []byte(`{"bucket_name": "some-bucket"}`)
+		dummyJSONReader := bytes.NewReader(dummyJSONBytes)
+
+		It("uses no encryption", func() {
+			c, err := NewFromReader(dummyJSONReader)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.EncryptionKey).To(BeNil())
+		})
+	})
+
 	Describe("when json is invalid", func() {
 		dummyJSONBytes := []byte(`{"credentials_source": '`)
 		dummyJSONReader := bytes.NewReader(dummyJSONBytes)

@@ -49,7 +49,11 @@ func (client *GCSBlobstore) checkLocation() error {
 
 // getObjectHandle returns a handle to an object at src.
 func (client GCSBlobstore) getObjectHandle(src string) *storage.ObjectHandle {
-	return client.client.Bucket(client.config.BucketName).Object(src)
+	handle := client.client.Bucket(client.config.BucketName).Object(src)
+	if client.config.EncryptionKey != nil {
+		handle = handle.Key(client.config.EncryptionKey)
+	}
+	return handle
 }
 
 // New returns a BlobstoreClient configured to operate using the given config

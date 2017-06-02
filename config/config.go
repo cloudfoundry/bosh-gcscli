@@ -32,6 +32,12 @@ type GCSCli struct {
 	// StorageClass is the type of storage used for objects added to the bucket
 	// https://cloud.google.com/storage/docs/storage-classes
 	StorageClass string `json:"storage_class"`
+	// EncryptionKey is a Customer-Supplied encryption key used to
+	// encrypt objects added to the bucket.
+	// If left empty, no explicit encryption key will be used;
+	// GCS transparently encrypts data using server-side encryption keys.
+	// https://cloud.google.com/storage/docs/encryption
+	EncryptionKey []byte `json:"encryption_key"`
 }
 
 const (
@@ -43,6 +49,10 @@ const (
 
 // ErrEmptyBucketName is returned when a bucket_name in the config is empty
 var ErrEmptyBucketName = errors.New("bucket_name must be set")
+
+// ErrWrongLengthEncryptionKey is returned when a non-nil encryption_key
+// in the config is not exactly 32 bytes.
+var ErrWrongLengthEncryptionKey = errors.New("encryption_key not 32 bytes")
 
 // getDefaultStorageClass returns the default StorageClass for a given location.
 // This takes into account regional/multi-regional incompatibility.
@@ -72,6 +82,10 @@ func NewFromReader(reader io.Reader) (GCSCli, error) {
 
 	if c.BucketName == "" {
 		return GCSCli{}, ErrEmptyBucketName
+	}
+
+	if len(c.EncryptionKey) != 32 && c.EncryptionKey != nil {
+		return GCSCli{}, ErrWrongLengthEncryptionKey
 	}
 
 	return c, nil
