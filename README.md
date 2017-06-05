@@ -60,6 +60,8 @@ for more information.
 A Makefile is provided for ease of development. Targets are annotated
 with descriptions.
 
+gvt is used for vendoring. For full usage, see the [manual at godoc](https://godoc.org/github.com/FiloSottile/gvt).
+
 Integration tests expect to be run from a host with [Application Default
 Credentials](https://developers.google.com/identity/protocols/application-default-credentials)
 available which has permissions to create and delete buckets.

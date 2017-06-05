@@ -20,7 +20,6 @@ build:
 
 # Fetch base dependencies as well as testing packages
 get-deps:
-	go get
 	go get github.com/golang/lint/golint
 	# Ginkgo and omega test tools
 	go get github.com/onsi/ginkgo/ginkgo
@@ -32,7 +31,7 @@ clean:
 
 # Run gofmt on all code
 fmt:
-	gofmt -l -w .
+	gofmt -l -w $$(ls -d */ | grep -v vendor)
 
 # Run linter with non-strict checking
 lint:
