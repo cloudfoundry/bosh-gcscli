@@ -28,6 +28,10 @@ import (
 	"github.com/cloudfoundry/bosh-gcscli/config"
 )
 
+// ErrInvalidROWriteOperation is returned when credentials associated with the
+// client disallow an attempted write operation.
+var ErrInvalidROWriteOperation = errors.New("the client operates in read only mode. Change 'credentials_source' parameter value ")
+
 // GCSBlobstore encapsulates interaction with the GCS blobstore
 type GCSBlobstore struct {
 	// gcsClient is a pre-configured storage.Client.
@@ -45,6 +49,18 @@ func (client *GCSBlobstore) checkLocation() error {
 		return err
 	}
 	return client.config.FitCompatibleLocation(attrs.Location)
+}
+
+// validateRemoteConfig determines if the configuration of the client matches
+// against the remote configuration.
+//
+// If operating in read-only mode, no mutations can be performed
+// so the remote bucket location is always compatible.
+func (client *GCSBlobstore) validateRemoteConfig() error {
+	if client.config.IsReadOnly() {
+		return nil
+	}
+	return client.checkLocation()
 }
 
 // getObjectHandle returns a handle to an object at src.
@@ -93,6 +109,10 @@ func (client GCSBlobstore) Get(src string, dest io.Writer) error {
 // which does retry an upload multiple times.
 // TODO: implement retry
 func (client GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
+	if client.config.IsReadOnly() {
+		return ErrInvalidROWriteOperation
+	}
+
 	remoteWriter := client.getObjectHandle(dest).NewWriter(context.Background())
 	remoteWriter.ObjectAttrs.StorageClass = client.config.StorageClass
 	if _, err := io.Copy(remoteWriter, src); err != nil {
@@ -106,6 +126,10 @@ func (client GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 //
 // If the object does not exist, Delete returns a nil error.
 func (client GCSBlobstore) Delete(dest string) error {
+	if client.config.IsReadOnly() {
+		return ErrInvalidROWriteOperation
+	}
+
 	err := client.getObjectHandle(dest).Delete(context.Background())
 	if err == storage.ErrObjectNotExist {
 		return nil

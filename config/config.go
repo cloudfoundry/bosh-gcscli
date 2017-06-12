@@ -28,6 +28,7 @@ type GCSCli struct {
 	BucketName string `json:"bucket_name"`
 	// CredentialsSource is the location of a Service Account File.
 	// If left empty, Application Default Credentials will be used.
+	// If equal to 'none', read-only scope will be used.
 	CredentialsSource string `json:"credentials_source"`
 	// StorageClass is the type of storage used for objects added to the bucket
 	// https://cloud.google.com/storage/docs/storage-classes
@@ -46,6 +47,10 @@ const (
 	defaultRegionalStorageClass      = "REGIONAL"
 	defaultMultiRegionalStorageClass = "MULTI_REGIONAL"
 )
+
+// NoneCredentialsSource specifies that credentials are explicitly empty
+// and that the client should be restricted to a read-only scope.
+const NoneCredentialsSource = "none"
 
 // ErrEmptyBucketName is returned when a bucket_name in the config is empty
 var ErrEmptyBucketName = errors.New("bucket_name must be set")
@@ -116,4 +121,9 @@ func (c *GCSCli) FitCompatibleLocation(loc string) error {
 	}
 
 	return validLocationStorageClass(loc, c.StorageClass)
+}
+
+// IsReadOnly returns if the configuration is limited to only read operations.
+func (c *GCSCli) IsReadOnly() bool {
+	return c.CredentialsSource == NoneCredentialsSource
 }

@@ -21,6 +21,8 @@ import (
 
 	"google.golang.org/api/option"
 
+	"net/http"
+
 	"cloud.google.com/go/storage"
 	"github.com/cloudfoundry/bosh-gcscli/config"
 )
@@ -35,11 +37,16 @@ func NewSDK(c config.GCSCli) (context.Context, *storage.Client, error) {
 	var client *storage.Client
 	var err error
 	ua := option.WithUserAgent(uaString)
-	if c.CredentialsSource == "" {
+	switch c.CredentialsSource {
+	case "":
 		client, err = storage.NewClient(ctx, ua)
-	} else {
+	case config.NoneCredentialsSource:
+		client, err = storage.NewClient(ctx, ua,
+			option.WithHTTPClient(http.DefaultClient))
+	default:
 		client, err = storage.NewClient(ctx, ua,
 			option.WithServiceAccountFile(c.CredentialsSource))
 	}
+
 	return ctx, client, err
 }

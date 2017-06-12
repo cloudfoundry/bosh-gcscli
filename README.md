@@ -25,7 +25,8 @@ Given a JSON config file (`config.json`)...
 
 
 Empty `credentials_source` implies attempting to use Application Default
-Credentials.
+Credentials. `none` as `credentials_source` specifies no read-only scope
+with explicitly no credentials.
 
 Empty `storage_class` implies using the default for the bucket.
 

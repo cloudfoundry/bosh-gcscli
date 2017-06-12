@@ -68,16 +68,38 @@ multiregional-bucket: multiregional.lock
 		gsutil mb -c MULTI_REGIONAL -l us "gs://$$(cat multiregional.lock)"; \
 	fi
 
+.PHONY: FORCE
+public.lock:
+	@test -s "public.lock" || \
+	{ echo -n "bosh-gcs"; \
+	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > public.lock
+
+
+public-bucket: public.lock
+	@gsutil ls | grep -q "$$(cat public.lock)"; if [ $$? -ne 0 ]; then \
+		gsutil mb -c MULTI_REGIONAL -l us "gs://$$(cat public.lock)" && \
+		gsutil iam ch allUsers:legacyObjectReader "gs://$$(cat public.lock)" && \
+		gsutil iam ch allUsers:legacyBucketReader "gs://$$(cat public.lock)" && \
+		echo "waiting for IAM to propagate" && \
+		until curl -s \
+			"https://storage.googleapis.com/$$(cat public.lock)/non-existent" \
+			| grep -q "NoSuchKey"; do sleep 1; done; \
+	fi
+
 # Create all buckets necessary for the test.
-prep-gcs: regional-bucket multiregional-bucket
+prep-gcs: regional-bucket multiregional-bucket public-bucket
 
 # Remove all buckets listed in $StorageClass.lock files.
 clean-gcs:
-	test -s "multiregional.lock" && test -s "regional.lock"
+	test -s "multiregional.lock" && \
+	test -s "regional.lock" && \
+	test -s "public.lock"
 	@gsutil rb "gs://$$(cat regional.lock)"
 	rm regional.lock
 	@gsutil rb "gs://$$(cat multiregional.lock)"
 	rm multiregional.lock
+	@gsutil rb "gs://$$(cat public.lock)"
+	rm public.lock
 
 # Perform only unit tests
 test-unit: get-deps clean fmt lint vet build
@@ -87,11 +109,13 @@ test-unit: get-deps clean fmt lint vet build
 test-int: get-deps clean fmt lint vet build prep-gcs
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
+	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 ginkgo -r
 
 # Perform all non-long tests, including integration tests.
 test-fast-int: get-deps clean fmt lint vet build prep-gcs
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
+	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 export SKIP_LONG_TESTS="yes" && \
 	 ginkgo -r

@@ -62,7 +62,8 @@ var (
 		"bucket_name":        "name of GCS bucket (required)",
 
 		"credentials_source": "path to JSON service account key
-		                       (optional, defaults to Application Default Credentials)",
+		                       (optional, defaults to Application Default Credentials)"
+		                       (can be "none" for explicitly no credentials),
 		"storage_class":      "storage class for objects
 		                       (optional, defaults to bucket settings)",
 	}
