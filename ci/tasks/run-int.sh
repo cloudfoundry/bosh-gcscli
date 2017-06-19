@@ -22,8 +22,7 @@ export PATH=${GOPATH}/bin:${PATH}
 
 pushd ${release_dir} > /dev/null
 
-echo $google_json_key_data > key.json
-GOOGLE_APPLICATION_CREDENTIALS=`pwd`/key.json make test-int
+GOOGLE_SERVICE_ACCOUNT=$google_json_key_data make test-int
 
 make clean-gcs
 

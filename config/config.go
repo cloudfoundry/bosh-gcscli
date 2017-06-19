@@ -52,17 +52,17 @@ const (
 	defaultMultiRegionalStorageClass = "MULTI_REGIONAL"
 )
 
-// DefaultCredentialsSource specifies that Application Default Credentials
-// should be used for authentication.
-const DefaultCredentialsSource = ""
+// ApplicationDefaultCredentialsSource specifies that
+// Application Default Credentials should be used for authentication.
+const ApplicationDefaultCredentialsSource = ""
 
 // NoneCredentialsSource specifies that credentials are explicitly empty
 // and that the client should be restricted to a read-only scope.
 const NoneCredentialsSource = "none"
 
-// StaticCredentialsSource specifies that a service account file included
-// in service_account_file should be used for authentication.
-const StaticCredentialsSource = "static"
+// ServiceAccountFileCredentialsSource specifies that a service account file
+// included in service_account_file should be used for authentication.
+const ServiceAccountFileCredentialsSource = "static"
 
 // ErrEmptyBucketName is returned when a bucket_name in the config is empty
 var ErrEmptyBucketName = errors.New("bucket_name must be set")
@@ -105,7 +105,7 @@ func NewFromReader(reader io.Reader) (GCSCli, error) {
 		return GCSCli{}, ErrEmptyBucketName
 	}
 
-	if c.CredentialsSource == StaticCredentialsSource &&
+	if c.CredentialsSource == ServiceAccountFileCredentialsSource &&
 		c.ServiceAccountFile == "" {
 		return GCSCli{}, ErrEmptyServiceAccountFile
 	}

@@ -37,7 +37,7 @@ var _ = Describe("Integration", func() {
 			Expect(public).ToNot(BeEmpty(),
 				fmt.Sprintf(NoBucketMsg, PublicBucketEnv))
 
-			ctx = NewAssertContext()
+			ctx = NewAssertContext(AsDefaultCredentials)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()

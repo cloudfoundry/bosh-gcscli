@@ -18,6 +18,10 @@ package client
 
 import (
 	"context"
+	"errors"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 
 	"google.golang.org/api/option"
 
@@ -25,6 +29,7 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/cloudfoundry/bosh-gcscli/config"
+	"golang.org/x/oauth2/jwt"
 )
 
 const uaString = "gcscli"
@@ -37,16 +42,32 @@ func NewSDK(c config.GCSCli) (context.Context, *storage.Client, error) {
 	var client *storage.Client
 	var err error
 	ua := option.WithUserAgent(uaString)
+	var opt option.ClientOption
 	switch c.CredentialsSource {
-	case "":
-		client, err = storage.NewClient(ctx, ua)
+	case config.ApplicationDefaultCredentialsSource:
+		var tokenSource oauth2.TokenSource
+		tokenSource, err = google.DefaultTokenSource(ctx,
+			storage.ScopeFullControl)
+		if err == nil {
+			opt = option.WithTokenSource(tokenSource)
+		}
 	case config.NoneCredentialsSource:
-		client, err = storage.NewClient(ctx, ua,
-			option.WithHTTPClient(http.DefaultClient))
+		opt = option.WithHTTPClient(http.DefaultClient)
+	case config.ServiceAccountFileCredentialsSource:
+		var token *jwt.Config
+		token, err = google.JWTConfigFromJSON([]byte(c.ServiceAccountFile),
+			storage.ScopeFullControl)
+		if err == nil {
+			tokenSource := token.TokenSource(ctx)
+			opt = option.WithTokenSource(tokenSource)
+		}
 	default:
-		client, err = storage.NewClient(ctx, ua,
-			option.WithServiceAccountFile(c.CredentialsSource))
+		err = errors.New("unknown credentials_source in configuration")
+	}
+	if err != nil {
+		return ctx, client, err
 	}
 
+	client, err = storage.NewClient(ctx, ua, opt)
 	return ctx, client, err
 }

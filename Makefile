@@ -105,15 +105,21 @@ clean-gcs:
 test-unit: get-deps clean fmt lint vet build
 	ginkgo -r -skipPackage integration
 
+.PHONY:
+check-int-env:
+ifndef GOOGLE_SERVICE_ACCOUNT
+	$(error environment variable GOOGLE_SERVICE_ACCOUNT is undefined)
+endif
+
 # Perform all tests, including integration tests.
-test-int: get-deps clean fmt lint vet build prep-gcs
+test-int: get-deps clean fmt lint vet build prep-gcs check-int-env
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 ginkgo -r
 
 # Perform all non-long tests, including integration tests.
-test-fast-int: get-deps clean fmt lint vet build prep-gcs
+test-fast-int: get-deps clean fmt lint vet build prep-gcs check-int-env
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \

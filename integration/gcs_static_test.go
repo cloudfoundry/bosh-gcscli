@@ -20,24 +20,14 @@ import (
 	"fmt"
 	"os"
 
-	"crypto/sha256"
-
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-// encryptionKeyBytes are used as the key in tests requiring encryption.
-var encryptionKeyBytes = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}
-
-// encryptionKeyBytesHash is the has of the encryptionKeyBytes
-//
-// Typical usage is ensuring the encryption key is actually used by GCS.
-var encryptionKeyBytesHash = sha256.Sum256(encryptionKeyBytes)
-
 var _ = Describe("Integration", func() {
-	Context("general (Default Applicaton Credentials) configuration", func() {
+	Context("static credentials configuration", func() {
 		regional := os.Getenv(RegionalBucketEnv)
 		multiRegional := os.Getenv(MultiRegionalBucketEnv)
 
@@ -48,11 +38,28 @@ var _ = Describe("Integration", func() {
 			Expect(multiRegional).ToNot(BeEmpty(),
 				fmt.Sprintf(NoBucketMsg, MultiRegionalBucketEnv))
 
-			ctx = NewAssertContext(AsDefaultCredentials)
+			ctx = NewAssertContext(AsStaticCredentials)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
+
+		configurations := []TableEntry{
+			Entry("MultiRegional bucket, default StorageClass", &config.GCSCli{
+				BucketName: multiRegional,
+			}),
+			Entry("Regional bucket, default StorageClass", &config.GCSCli{
+				BucketName: regional,
+			}),
+			Entry("MultiRegional bucket, explicit StorageClass", &config.GCSCli{
+				BucketName:   multiRegional,
+				StorageClass: "MULTI_REGIONAL",
+			}),
+			Entry("Regional bucket, explicit StorageClass", &config.GCSCli{
+				BucketName:   regional,
+				StorageClass: "REGIONAL",
+			}),
+		}
 
 		encryptedConfigs := []TableEntry{
 			Entry("MultiRegional bucket, default StorageClass, encrypted", &config.GCSCli{
@@ -64,26 +71,41 @@ var _ = Describe("Integration", func() {
 				EncryptionKey: encryptionKeyBytes,
 			}),
 		}
+		configurations = append(configurations, encryptedConfigs...)
 
-		DescribeTable("Get with correct encryption_key works",
+		DescribeTable("Blobstore lifecycle works",
 			func(config *config.GCSCli) {
 				ctx.AddConfig(config)
-				AssertEncryptionWorks(gcsCLIPath, ctx)
+				AssertLifecycleWorks(gcsCLIPath, ctx)
 			},
-			encryptedConfigs...)
+			configurations...)
 
-		DescribeTable("Get with wrong encryption_key should fail",
+		DescribeTable("Invalid Delete works",
 			func(config *config.GCSCli) {
 				ctx.AddConfig(config)
-				AssertWrongKeyEncryptionFails(gcsCLIPath, ctx)
+				AssertDeleteNonexistentWorks(gcsCLIPath, ctx)
 			},
-			encryptedConfigs...)
+			configurations...)
 
-		DescribeTable("Get with no encryption_key should fail",
+		DescribeTable("Multipart Put works",
 			func(config *config.GCSCli) {
 				ctx.AddConfig(config)
-				AssertNoKeyEncryptionFails(gcsCLIPath, ctx)
+				AssertMultipartPutWorks(gcsCLIPath, ctx)
 			},
-			encryptedConfigs...)
+			configurations...)
+
+		DescribeTable("Invalid Put should fail",
+			func(config *config.GCSCli) {
+				ctx.AddConfig(config)
+				AssertBrokenSourcePutFails(gcsCLIPath, ctx)
+			},
+			configurations...)
+
+		DescribeTable("Invalid Get should fail",
+			func(config *config.GCSCli) {
+				ctx.AddConfig(config)
+				AssertGetNonexistentFails(gcsCLIPath, ctx)
+			},
+			configurations...)
 	})
 })

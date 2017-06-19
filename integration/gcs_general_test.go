@@ -45,7 +45,7 @@ var _ = Describe("Integration", func() {
 			Expect(multiRegional).ToNot(BeEmpty(),
 				fmt.Sprintf(NoBucketMsg, MultiRegionalBucketEnv))
 
-			ctx = NewAssertContext()
+			ctx = NewAssertContext(AsDefaultCredentials)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
