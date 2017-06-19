@@ -17,37 +17,26 @@
 package integration
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-const PublicBucketEnv = "PUBLIC_BUCKET_NAME"
-
 var _ = Describe("Integration", func() {
 	Context("read-only configuration", func() {
-		public := os.Getenv(PublicBucketEnv)
-
 		var ctx AssertContext
 		BeforeEach(func() {
-			Expect(public).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, PublicBucketEnv))
-
 			ctx = NewAssertContext(AsDefaultCredentials)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
 
-		configurations := []TableEntry{
-			Entry("Public bucket", &config.GCSCli{
-				BucketName: public,
-			}),
-		}
+		configurations, configErr := getPublicConfigs()
+		It("fetches configurations", func() {
+			Expect(configErr).To(BeNil(), "failed to get configurations")
+		})
 
 		DescribeTable("Read-only Get works",
 			func(config *config.GCSCli) {

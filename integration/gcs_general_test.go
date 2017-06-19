@@ -17,68 +17,29 @@
 package integration
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-const RegionalBucketEnv = "REGIONAL_BUCKET_NAME"
-const MultiRegionalBucketEnv = "MULTIREGIONAL_BUCKET_NAME"
-
-// NoBucketMsg is the template used when a BucketEnv's environment variable
-// has not been populated.
-const NoBucketMsg = "environment variable %s expected to contain a valid Google Cloud Storage bucket but was empty"
-
 var _ = Describe("Integration", func() {
 	Context("general (Default Applicaton Credentials) configuration", func() {
-		regional := os.Getenv(RegionalBucketEnv)
-		multiRegional := os.Getenv(MultiRegionalBucketEnv)
-
 		var ctx AssertContext
 		BeforeEach(func() {
-			Expect(regional).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, RegionalBucketEnv))
-			Expect(multiRegional).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, MultiRegionalBucketEnv))
-
 			ctx = NewAssertContext(AsDefaultCredentials)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
 
-		configurations := []TableEntry{
-			Entry("MultiRegional bucket, default StorageClass", &config.GCSCli{
-				BucketName: multiRegional,
-			}),
-			Entry("Regional bucket, default StorageClass", &config.GCSCli{
-				BucketName: regional,
-			}),
-			Entry("MultiRegional bucket, explicit StorageClass", &config.GCSCli{
-				BucketName:   multiRegional,
-				StorageClass: "MULTI_REGIONAL",
-			}),
-			Entry("Regional bucket, explicit StorageClass", &config.GCSCli{
-				BucketName:   regional,
-				StorageClass: "REGIONAL",
-			}),
-		}
-
-		encryptedConfigs := []TableEntry{
-			Entry("MultiRegional bucket, default StorageClass, encrypted", &config.GCSCli{
-				BucketName:    multiRegional,
-				EncryptionKey: encryptionKeyBytes,
-			}),
-			Entry("Regional bucket, default StorageClass, encrypted", &config.GCSCli{
-				BucketName:    regional,
-				EncryptionKey: encryptionKeyBytes,
-			}),
-		}
-		configurations = append(configurations, encryptedConfigs...)
+		baseConfigs, baseConfigErr := getBaseConfigs()
+		encryptedConfigs, encryptedConfigErr := getEncryptedConfigs()
+		configurations := append(baseConfigs, encryptedConfigs...)
+		It("fetches configurations", func() {
+			Expect(baseConfigErr).To(BeNil(), "failed to get configurations")
+			Expect(encryptedConfigErr).To(BeNil(), "failed to get configurations")
+		})
 
 		DescribeTable("Blobstore lifecycle works",
 			func(config *config.GCSCli) {

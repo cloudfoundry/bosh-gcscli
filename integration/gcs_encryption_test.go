@@ -17,53 +17,26 @@
 package integration
 
 import (
-	"fmt"
-	"os"
-
-	"crypto/sha256"
-
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
 )
 
-// encryptionKeyBytes are used as the key in tests requiring encryption.
-var encryptionKeyBytes = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}
-
-// encryptionKeyBytesHash is the has of the encryptionKeyBytes
-//
-// Typical usage is ensuring the encryption key is actually used by GCS.
-var encryptionKeyBytesHash = sha256.Sum256(encryptionKeyBytes)
-
 var _ = Describe("Integration", func() {
 	Context("general (Default Applicaton Credentials) configuration", func() {
-		regional := os.Getenv(RegionalBucketEnv)
-		multiRegional := os.Getenv(MultiRegionalBucketEnv)
-
 		var ctx AssertContext
 		BeforeEach(func() {
-			Expect(regional).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, RegionalBucketEnv))
-			Expect(multiRegional).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, MultiRegionalBucketEnv))
-
 			ctx = NewAssertContext(AsDefaultCredentials)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
 
-		encryptedConfigs := []TableEntry{
-			Entry("MultiRegional bucket, default StorageClass, encrypted", &config.GCSCli{
-				BucketName:    multiRegional,
-				EncryptionKey: encryptionKeyBytes,
-			}),
-			Entry("Regional bucket, default StorageClass, encrypted", &config.GCSCli{
-				BucketName:    regional,
-				EncryptionKey: encryptionKeyBytes,
-			}),
-		}
+		encryptedConfigs, configErr := getEncryptedConfigs()
+		It("fetches configurations", func() {
+			Expect(configErr).To(BeNil(), "failed to get configurations")
+		})
 
 		DescribeTable("Get with correct encryption_key works",
 			func(config *config.GCSCli) {

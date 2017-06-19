@@ -17,9 +17,6 @@
 package integration
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -28,32 +25,18 @@ import (
 
 var _ = Describe("Integration", func() {
 	Context("invalid storage_class for bucket (Default Applicaton Credentials) configuration", func() {
-		regional := os.Getenv(RegionalBucketEnv)
-		multiRegional := os.Getenv(MultiRegionalBucketEnv)
-
 		var ctx AssertContext
 		BeforeEach(func() {
-			Expect(regional).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, RegionalBucketEnv))
-			Expect(multiRegional).ToNot(BeEmpty(),
-				fmt.Sprintf(NoBucketMsg, MultiRegionalBucketEnv))
-
 			ctx = NewAssertContext(AsDefaultCredentials)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
 
-		configurations := []TableEntry{
-			Entry("MultiRegional bucket, regional StorageClass", &config.GCSCli{
-				BucketName:   multiRegional,
-				StorageClass: "REGIONAL",
-			}),
-			Entry("Regional bucket, multiregional StorageClass", &config.GCSCli{
-				BucketName:   regional,
-				StorageClass: "MULTI_REGIONAL",
-			}),
-		}
+		configurations, configErr := getStorageCompatConfigs()
+		It("fetches configurations", func() {
+			Expect(configErr).To(BeNil(), "failed to get configurations")
+		})
 
 		DescribeTable("Invalid Put should fail",
 			func(config *config.GCSCli) {
