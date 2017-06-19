@@ -59,18 +59,28 @@ var (
 	configPath = flag.String("c", "",
 		`JSON config file (ie, config.json).
 	{
-		"bucket_name":        "name of GCS bucket (required)",
+		"bucket_name":         "name of GCS bucket (required)",
 
-		"credentials_source": "path to JSON service account key
-		                       (optional, defaults to Application Default Credentials)"
-		                       (can be "none" for explicitly no credentials),
-		"storage_class":      "storage class for objects
-		                       (optional, defaults to bucket settings)",
+		"credentials_source":  "flag for credentials
+		                        (optional, defaults to Application Default Credentials)
+		                        (can be "static" for service_account_file),
+		                        (can be "none" for explicitly no credentials)"
+		"storage_class":       "storage class for objects
+		                        (optional, defaults to bucket settings)",
+		"service_account_file":"JSON Service Account File
+		                        (optional, required for static credentials)",
+		"encryption_key":      "Base64 encoded 32 byte Customer-Supplied
+		                        encryption key used to encrypt objects 
+		                        (optional)"
 	}
 
 	storage_class is one of MULTI_REGIONAL, REGIONAL, NEARLINE, or COLDLINE.
 	See the docs for characteristics and location compatibility.
 	https://cloud.google.com/storage/docs/storage-classes
+
+	For more information on Customer-Supplied encryption keys,
+	see the docs.
+	https://cloud.google.com/storage/docs/encryption
 `)
 )
 

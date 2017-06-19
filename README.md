@@ -16,17 +16,28 @@ Given a JSON config file (`config.json`)...
 
 ``` json
 {
-  "bucket_name":            "<string> (required)",
+  "bucket_name":         "name of GCS bucket (required)",
 
-  "credentials_source":     "<string> [path_to_service_account_file|none]",
-  "storage_class":          "<string> (explicit_storage_class|none)",
+  "credentials_source":  "flag for credentials
+                          (optional, defaults to Application Default Credentials)
+                          (can be "static" for service_account_file),
+                          (can be "none" for explicitly no credentials)"
+  "storage_class":       "storage class for objects
+                          (optional, defaults to bucket settings)",
+  "service_account_file":"JSON Service Account File
+                          (optional, required for static credentials)",
+  "encryption_key":      "Base64 encoded 32 byte Customer-Supplied
+                          encryption key used to encrypt objects 
+                          (optional)"
 }
 ```
 
 
 Empty `credentials_source` implies attempting to use Application Default
 Credentials. `none` as `credentials_source` specifies no read-only scope
-with explicitly no credentials.
+with explicitly no credentials. `static` as `credentials_source` specifies to
+use the [Service Account File](https://developers.google.com/identity/protocols/OAuth2ServiceAccount) included
+in `service_account_file`.
 
 Empty `storage_class` implies using the default for the bucket.
 
