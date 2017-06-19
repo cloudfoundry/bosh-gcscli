@@ -139,6 +139,27 @@ var _ = Describe("BlobstoreClient configuration", func() {
 		})
 	})
 
+	Describe("when credentials_source is 'static' with service_account_file", func() {
+		dummyJSONBytes := []byte(`{"credentials_source": "static", "service_account_file": "{\"foo\": \"bar\"}", "bucket_name": "some-bucket"}`)
+		dummyJSONReader := bytes.NewReader(dummyJSONBytes)
+
+		It("uses the credentials", func() {
+			c, err := NewFromReader(dummyJSONReader)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(c.ServiceAccountFile).ToNot(BeEmpty())
+		})
+	})
+
+	Describe("when credentials_source is 'static' without service_account_file", func() {
+		dummyJSONBytes := []byte(`{"credentials_source": "static", "bucket_name": "some-bucket"}`)
+		dummyJSONReader := bytes.NewReader(dummyJSONBytes)
+
+		It("returns an error", func() {
+			_, err := NewFromReader(dummyJSONReader)
+			Expect(err).To(Equal(ErrEmptyServiceAccountFile))
+		})
+	})
+
 	Describe("when credentials_source is 'none'", func() {
 		dummyJSONBytes := []byte(`{"credentials_source": "none", "bucket_name": "some-bucket"}`)
 		dummyJSONReader := bytes.NewReader(dummyJSONBytes)

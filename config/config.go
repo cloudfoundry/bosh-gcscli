@@ -29,7 +29,11 @@ type GCSCli struct {
 	// CredentialsSource is the location of a Service Account File.
 	// If left empty, Application Default Credentials will be used.
 	// If equal to 'none', read-only scope will be used.
+	// If equal to 'static', service_account_file will be used.
 	CredentialsSource string `json:"credentials_source"`
+	// ServiceAccountFile is the contents of a JSON Service Account File.
+	// Required if credentials_source is 'static', otherwise ignored.
+	ServiceAccountFile string `json:"service_account_file"`
 	// StorageClass is the type of storage used for objects added to the bucket
 	// https://cloud.google.com/storage/docs/storage-classes
 	StorageClass string `json:"storage_class"`
@@ -48,12 +52,24 @@ const (
 	defaultMultiRegionalStorageClass = "MULTI_REGIONAL"
 )
 
+// DefaultCredentialsSource specifies that Application Default Credentials
+// should be used for authentication.
+const DefaultCredentialsSource = ""
+
 // NoneCredentialsSource specifies that credentials are explicitly empty
 // and that the client should be restricted to a read-only scope.
 const NoneCredentialsSource = "none"
 
+// StaticCredentialsSource specifies that a service account file included
+// in service_account_file should be used for authentication.
+const StaticCredentialsSource = "static"
+
 // ErrEmptyBucketName is returned when a bucket_name in the config is empty
 var ErrEmptyBucketName = errors.New("bucket_name must be set")
+
+// ErrEmptyServiceAccountFile is returned when service_account_file in the
+// config is empty when StaticCredentialsSource is explicitly requested.
+var ErrEmptyServiceAccountFile = errors.New("service_account_file must be set")
 
 // ErrWrongLengthEncryptionKey is returned when a non-nil encryption_key
 // in the config is not exactly 32 bytes.
@@ -87,6 +103,11 @@ func NewFromReader(reader io.Reader) (GCSCli, error) {
 
 	if c.BucketName == "" {
 		return GCSCli{}, ErrEmptyBucketName
+	}
+
+	if c.CredentialsSource == StaticCredentialsSource &&
+		c.ServiceAccountFile == "" {
+		return GCSCli{}, ErrEmptyServiceAccountFile
 	}
 
 	if len(c.EncryptionKey) != 32 && c.EncryptionKey != nil {
