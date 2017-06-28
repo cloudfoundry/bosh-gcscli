@@ -29,11 +29,11 @@ type GCSCli struct {
 	// CredentialsSource is the location of a Service Account File.
 	// If left empty, Application Default Credentials will be used.
 	// If equal to 'none', read-only scope will be used.
-	// If equal to 'static', service_account_file will be used.
+	// If equal to 'static', json_key will be used.
 	CredentialsSource string `json:"credentials_source"`
 	// ServiceAccountFile is the contents of a JSON Service Account File.
 	// Required if credentials_source is 'static', otherwise ignored.
-	ServiceAccountFile string `json:"service_account_file"`
+	ServiceAccountFile string `json:"json_key"`
 	// StorageClass is the type of storage used for objects added to the bucket
 	// https://cloud.google.com/storage/docs/storage-classes
 	StorageClass string `json:"storage_class"`
@@ -61,15 +61,15 @@ const ApplicationDefaultCredentialsSource = ""
 const NoneCredentialsSource = "none"
 
 // ServiceAccountFileCredentialsSource specifies that a service account file
-// included in service_account_file should be used for authentication.
+// included in json_key should be used for authentication.
 const ServiceAccountFileCredentialsSource = "static"
 
 // ErrEmptyBucketName is returned when a bucket_name in the config is empty
 var ErrEmptyBucketName = errors.New("bucket_name must be set")
 
-// ErrEmptyServiceAccountFile is returned when service_account_file in the
+// ErrEmptyServiceAccountFile is returned when json_key in the
 // config is empty when StaticCredentialsSource is explicitly requested.
-var ErrEmptyServiceAccountFile = errors.New("service_account_file must be set")
+var ErrEmptyServiceAccountFile = errors.New("json_key must be set")
 
 // ErrWrongLengthEncryptionKey is returned when a non-nil encryption_key
 // in the config is not exactly 32 bytes.

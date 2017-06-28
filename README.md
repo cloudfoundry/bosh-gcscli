@@ -20,11 +20,11 @@ Given a JSON config file (`config.json`)...
 
   "credentials_source":  "flag for credentials
                           (optional, defaults to Application Default Credentials)
-                          (can be "static" for service_account_file),
+                          (can be "static" for json_key),
                           (can be "none" for explicitly no credentials)"
   "storage_class":       "storage class for objects
                           (optional, defaults to bucket settings)",
-  "service_account_file":"JSON Service Account File
+  "json_key":            "JSON Service Account File
                           (optional, required for static credentials)",
   "encryption_key":      "Base64 encoded 32 byte Customer-Supplied
                           encryption key used to encrypt objects 
@@ -37,7 +37,7 @@ Empty `credentials_source` implies attempting to use Application Default
 Credentials. `none` as `credentials_source` specifies no read-only scope
 with explicitly no credentials. `static` as `credentials_source` specifies to
 use the [Service Account File](https://developers.google.com/identity/protocols/OAuth2ServiceAccount) included
-in `service_account_file`.
+in `json_key`.
 
 Empty `storage_class` implies using the default for the bucket.
 
