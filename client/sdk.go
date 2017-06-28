@@ -32,7 +32,7 @@ import (
 	"golang.org/x/oauth2/jwt"
 )
 
-const uaString = "gcscli"
+const uaString = "bosh-gcscli"
 
 // NewSDK returns context and client necessary to instantiate a client
 // based off of the provided configuration.
