@@ -12,7 +12,10 @@ source ci/tasks/utils.sh
 
 popd > /dev/null
 
+check_param google_project
 check_param google_json_key_data
+
+gcloud config set project $google_project
 
 echo $google_json_key_data > key.json
 gcloud auth activate-service-account --key-file=key.json

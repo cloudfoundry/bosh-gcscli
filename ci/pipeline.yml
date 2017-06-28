@@ -19,6 +19,7 @@ jobs:
       - task: fast-integration-tests
         file: gcscli-src/ci/tasks/run-fast-int.yml
         params:
+          google_project: {{google_project}}
           google_json_key_data: {{google_json_key_data}}
 
   - name: run-int
@@ -32,6 +33,7 @@ jobs:
       - task: full-integration-tests
         file: gcscli-src/ci/tasks/run-int.yml
         params:
+          google_project: {{google_project}}
           google_json_key_data: {{google_json_key_data}}
 
 
