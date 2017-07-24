@@ -14,8 +14,11 @@ WORKDIR /tmp/docker-build
 
 # Golang
 ENV GO_VERSION=1.8.3
+ENV GO_SHA1SUM=838c415896ef5ecd395dfabde5e7e6f8ac943c8e
 
-RUN curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz
+RUN curl -LO https://storage.googleapis.com/golang/go${GO_VERSION}.linux-amd64.tar.gz && \
+    echo "${GO_SHA1SUM}  go${GO_VERSION}.linux-amd64.tar.gz" > go_${GO_VERSION}_SHA1SUM && \
+    sha1sum -cw --status go_${GO_VERSION}_SHA1SUM
 RUN tar -C /usr/local -xzf go${GO_VERSION}.linux-amd64.tar.gz
 ENV GOPATH /root/go
 RUN mkdir -p /root/go/bin
