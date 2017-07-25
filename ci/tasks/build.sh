@@ -19,7 +19,7 @@ output_dir=${workspace_dir}/out
 semver="$(cat ${semver_dir}/number)"
 timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
-binname="s3cli-${semver}-${GOOS}-amd64"
+binname="gcscli-${semver}-${GOOS}-amd64"
 if [ $GOOS = "windows" ]; then
 	binname="${binname}.exe"
 fi
@@ -31,7 +31,7 @@ pushd ${release_dir} > /dev/null
   echo -e "\n building artifact..."
   go build -ldflags "-X main.version=${version}" \
     -o "out/${binname}"                          \
-    github.com/cloudfoundry/bosh-s3cli
+    github.com/cloudfoundry/bosh-gcscli
 
   echo -e "\n sha1 of artifact..."
   sha1sum "out/${binname}"
