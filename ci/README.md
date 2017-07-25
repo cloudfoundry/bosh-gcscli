@@ -21,3 +21,16 @@ fly -t google set-pipeline -p bosh-gcscli -c pipeline.yml -l credentials.yml
 ```
 fly -t google unpause-pipeline -p bosh-gcscli
 ```
+
+## Development pipeline
+
+`pipeline-develop.yml` contains the functional tests without the release
+handling. For development, it is recommended to use this as it is significantly
+easier to setup.
+
+To prepare, follow the above steps with the following exceptions.
+
+* Use `pipeline-develop.yml` instead of `pipeline.yml`
+
+* Change the `bosh-gcscli-src-in` to reference your development repository and
+branch.
