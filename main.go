@@ -99,28 +99,27 @@ func main() {
 	}
 
 	if *configPath == "" {
-		fmt.Println("no config file provided\nSee -help for usage")
-		os.Exit(1)
+		log.Fatalf("no config file provided\nSee -help for usage\n")
 	}
 
 	configFile, err := os.Open(*configPath)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("opening config %s: %v\n", *configPath, err)
 	}
 
 	gcsConfig, err := config.NewFromReader(configFile)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("reading config %s: %v\n", *configPath, err)
 	}
 
 	ctx, gcsClient, err := client.NewSDK(gcsConfig)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("creating gcs sdk: %v\n", err)
 	}
 
 	blobstoreClient, err := client.New(ctx, gcsClient, &gcsConfig)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("creating gcs client: %v\n", err)
 	}
 
 	nonFlagArgs := flag.Args()
