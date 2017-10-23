@@ -40,19 +40,8 @@ type GCSBlobstore struct {
 	config *config.GCSCli
 }
 
-// checkLocation determines if the configured StorageClass of the
-// GCSBlobstore is compatible with the configured bucket's location.
-func (client *GCSBlobstore) checkLocation() error {
-	bucket := client.client.Bucket(client.config.BucketName)
-	attrs, err := bucket.Attrs(context.Background())
-	if err != nil {
-		return err
-	}
-	return client.config.FitCompatibleLocation(attrs.Location)
-}
-
 // validateRemoteConfig determines if the configuration of the client matches
-// against the remote configuration.
+// against the remote configuration and the StorageClass is valid for the location.
 //
 // If operating in read-only mode, no mutations can be performed
 // so the remote bucket location is always compatible.
@@ -60,7 +49,13 @@ func (client *GCSBlobstore) validateRemoteConfig() error {
 	if client.config.IsReadOnly() {
 		return nil
 	}
-	return client.checkLocation()
+
+	bucket := client.client.Bucket(client.config.BucketName)
+	attrs, err := bucket.Attrs(context.Background())
+	if err != nil {
+		return err
+	}
+	return client.config.FitCompatibleLocation(attrs.Location)
 }
 
 // getObjectHandle returns a handle to an object at src.
@@ -88,7 +83,7 @@ func New(ctx context.Context, gcsClient *storage.Client,
 			errors.New("nil config causes invalid blobstore")
 	}
 	blobstore := GCSBlobstore{gcsClient, gcscliConfig}
-	return blobstore, blobstore.checkLocation()
+	return blobstore, blobstore.validateRemoteConfig()
 }
 
 // Get fetches a blob from the GCS blobstore.
