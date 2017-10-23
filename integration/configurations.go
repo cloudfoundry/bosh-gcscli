@@ -108,17 +108,14 @@ func getEncryptedConfigs() ([]TableEntry, error) {
 	}, nil
 }
 
-func getPublicConfigs() ([]TableEntry, error) {
+func getPublicConfig() (*config.GCSCli, error) {
 	public, err := readBucketEnv(publicBucketEnv)
 	if err != nil {
 		return nil, fmt.Errorf(getConfigErrMsg, "public", err)
 	}
 
-	return []TableEntry{
-		Entry("Public bucket",
-			&config.GCSCli{
-				BucketName: public,
-			}),
+	return &config.GCSCli{
+		BucketName: public,
 	}, nil
 }
 

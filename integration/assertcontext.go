@@ -115,6 +115,7 @@ func AsReadOnlyCredentials(ctx *AssertContext) {
 		"cannot set read-only AssertContext without config")
 
 	conf.CredentialsSource = config.NoneCredentialsSource
+	conf.ServiceAccountFile = ""
 }
 
 // AsStaticCredentials configures the AssertContext to authenticate explicitly

@@ -16,7 +16,7 @@ default: test-int
 
 # build the binary
 build:
-	go build
+	go install
 
 # Fetch base dependencies as well as testing packages
 get-deps:
@@ -125,3 +125,20 @@ test-fast-int: get-deps clean fmt lint vet build prep-gcs check-int-env
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 export SKIP_LONG_TESTS="yes" && \
 	 ginkgo -r
+
+help:
+	 @echo "common developer commands:"
+	 @echo "  get-deps: fetch developer dependencies"
+	 @echo "  fmt: run gofmt on the codebase"
+	 @echo "  clean: run go clean on the codebase"
+	 @echo "  lint: run go lint on the codebase"
+	 @echo "  vet: run go vet on the codebase"
+	 @echo ""
+	 @echo "common testing commands:"
+	 @echo "  prep-gcs: create external GCS buckets needed for integration testing"
+	 @echo "  clean-gcs: remove external GCS buckets"
+	 @echo "  test-fast-int: run an reduced integration test suite (presubmit)"
+	 @echo "  test-int: run the full integration test (CI only)"
+	 @echo ""
+	 @echo "expected environment variables:"
+	 @echo "  GOOGLE_SERVICE_ACCOUNT=contents of a JSON service account key"

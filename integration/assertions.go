@@ -23,9 +23,6 @@ import (
 	"os"
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
-	"github.com/cloudfoundry/bosh-gcscli/config"
-
-	"cloud.google.com/go/storage"
 
 	"crypto/rand"
 	"io/ioutil"
@@ -125,53 +122,6 @@ func AssertEncryptionWorks(gcsCLIPath string, ctx AssertContext) {
 	Expect(session.ExitCode()).To(BeZero())
 }
 
-// AssertReadonlyGetWorks tests that a read-only client can access
-// a publicly accessible bucket.
-//
-// The provided AssertContext must contain a bucket
-// which is publicly accessible.
-func AssertReadonlyGetWorks(gcsCLIPath string, ctx AssertContext) {
-	Expect(ctx.Config.CredentialsSource).ToNot(Equal(config.NoneCredentialsSource),
-		"Cannot use 'none' credentials to setup")
-
-	session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"put", ctx.ContentFile, ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
-
-	_, rwClient, err := client.NewSDK(*ctx.Config)
-	Expect(err).ToNot(HaveOccurred())
-	bucket := rwClient.Bucket(ctx.Config.BucketName)
-	obj := bucket.Object(ctx.GCSFileName)
-	err = obj.ACL().Set(context.Background(),
-		storage.AllUsers, storage.RoleReader)
-	Expect(err).ToNot(HaveOccurred())
-
-	roctx := ctx.Clone(AsReadOnlyCredentials)
-	defer roctx.Cleanup()
-
-	tmpLocalFile, err := ioutil.TempFile("", "gcscli-download")
-	Expect(err).ToNot(HaveOccurred())
-	defer func() { _ = os.Remove(tmpLocalFile.Name()) }()
-	err = tmpLocalFile.Close()
-	Expect(err).ToNot(HaveOccurred())
-
-	session, err = RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-		"get", ctx.GCSFileName, tmpLocalFile.Name())
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero(),
-		fmt.Sprintf("unexpected '%s'", session.Err.Contents()))
-
-	gottenBytes, err := ioutil.ReadFile(tmpLocalFile.Name())
-	Expect(err).ToNot(HaveOccurred())
-	Expect(string(gottenBytes)).To(Equal(ctx.ExpectedString))
-
-	session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"delete", ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
-}
-
 // randReadSeeker is a ReadSeeker which returns random content and
 // non-nil error for every operation.
 //
@@ -261,58 +211,6 @@ func AssertPutFails(gcsCLIPath string, ctx AssertContext) {
 		"put", ctx.ContentFile, ctx.GCSFileName)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(session.ExitCode()).ToNot(BeZero())
-}
-
-// AsserReadOnlytGetNonexistentFails tests that attempting to get a non-existent
-// object will fail with a specific error.
-func AsserReadOnlytGetNonexistentFails(gcsCLIPath string, ctx AssertContext) {
-	roctx := ctx.Clone(AsReadOnlyCredentials)
-	defer roctx.Cleanup()
-
-	session, err := RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-		"get", ctx.GCSFileName, "/dev/null")
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).ToNot(BeZero())
-	Expect(session.Err.Contents()).To(ContainSubstring("object doesn't exist"))
-}
-
-// AssertReadOnlyPutFails tests that a read-only context
-// will cause a put operation to fail.
-//
-// The specific error is checked to ensure that this operation is caught
-// as invalid before the client performs any remote action.
-func AssertReadOnlyPutFails(gcsCLIPath string, ctx AssertContext) {
-	Expect(ctx.Config.CredentialsSource).ToNot(Equal(config.NoneCredentialsSource),
-		"Cannot use 'none' credentials to setup")
-
-	roctx := ctx.Clone(AsReadOnlyCredentials)
-	defer roctx.Cleanup()
-
-	session, err := RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-		"put", roctx.ContentFile, roctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).ToNot(BeZero())
-	Expect(session.Err.Contents()).To(ContainSubstring(client.ErrInvalidROWriteOperation.Error()))
-
-}
-
-// AssertReadOnlyDeleteFails tests that a read-only context
-// will cause a delete operation to fail.
-//
-// The specific error is checked to ensure that this operation is caught
-// as invalid before the client performs any remote action.
-func AssertReadOnlyDeleteFails(gcsCLIPath string, ctx AssertContext) {
-	Expect(ctx.Config.CredentialsSource).ToNot(Equal(config.NoneCredentialsSource),
-		"Cannot use 'none' credentials to setup")
-
-	roctx := ctx.Clone(AsReadOnlyCredentials)
-	defer roctx.Cleanup()
-
-	session, err := RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-		"delete", roctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).ToNot(BeZero())
-	Expect(session.Err.Contents()).To(ContainSubstring(client.ErrInvalidROWriteOperation.Error()))
 }
 
 // AssertWrongKeyEncryptionFails tests that uploading a blob with encryption
