@@ -16,7 +16,7 @@ default: test-int
 
 # build the binary
 build:
-	go build
+	go install
 
 # Fetch base dependencies as well as testing packages
 get-deps:
