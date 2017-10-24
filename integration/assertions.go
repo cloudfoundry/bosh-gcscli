@@ -27,8 +27,6 @@ import (
 	"crypto/rand"
 	"io/ioutil"
 
-	"bytes"
-
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -89,34 +87,6 @@ func AssertLifecycleWorks(gcsCLIPath string, ctx AssertContext) {
 // file will be silently ignored.
 func AssertDeleteNonexistentWorks(gcsCLIPath string, ctx AssertContext) {
 	session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"delete", ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
-}
-
-// AssertEncryptionWorks tests that a blob uploaded with a specified
-// encryption_key can be downloaded again.
-func AssertEncryptionWorks(gcsCLIPath string, ctx AssertContext) {
-	Expect(ctx.Config.EncryptionKey).ToNot(BeNil(),
-		"Need encryption key for test")
-
-	session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"put", ctx.ContentFile, ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
-
-	_, gcsClient, err := client.NewSDK(*ctx.Config)
-	Expect(err).ToNot(HaveOccurred())
-	blobstoreClient, err := client.New(context.Background(),
-		gcsClient, ctx.Config)
-	Expect(err).ToNot(HaveOccurred())
-
-	var target bytes.Buffer
-	err = blobstoreClient.Get(ctx.GCSFileName, &target)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(target.Bytes()).To(Equal([]byte(ctx.ExpectedString)))
-
-	session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
 		"delete", ctx.GCSFileName)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(session.ExitCode()).To(BeZero())
@@ -211,62 +181,4 @@ func AssertPutFails(gcsCLIPath string, ctx AssertContext) {
 		"put", ctx.ContentFile, ctx.GCSFileName)
 	Expect(err).ToNot(HaveOccurred())
 	Expect(session.ExitCode()).ToNot(BeZero())
-}
-
-// AssertWrongKeyEncryptionFails tests that uploading a blob with encryption
-// results in failure to download when the key is changed.
-func AssertWrongKeyEncryptionFails(gcsCLIPath string, ctx AssertContext) {
-	Expect(ctx.Config.EncryptionKey).ToNot(BeNil(),
-		"Need encryption key for test")
-
-	session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"put", ctx.ContentFile, ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
-
-	_, gcsClient, err := client.NewSDK(*ctx.Config)
-	Expect(err).ToNot(HaveOccurred())
-	blobstoreClient, err := client.New(context.Background(),
-		gcsClient, ctx.Config)
-	Expect(err).ToNot(HaveOccurred())
-
-	ctx.Config.EncryptionKey[0]++
-
-	var target bytes.Buffer
-	err = blobstoreClient.Get(ctx.GCSFileName, &target)
-	Expect(err).To(HaveOccurred())
-
-	session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"delete", ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
-}
-
-// AssertNoKeyEncryptionFails tests that uploading a blob with encryption
-// results in failure to download without encryption.
-func AssertNoKeyEncryptionFails(gcsCLIPath string, ctx AssertContext) {
-	Expect(ctx.Config.EncryptionKey).ToNot(BeNil(),
-		"Need encryption key for test")
-
-	session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"put", ctx.ContentFile, ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
-
-	_, gcsClient, err := client.NewSDK(*ctx.Config)
-	Expect(err).ToNot(HaveOccurred())
-	blobstoreClient, err := client.New(context.Background(),
-		gcsClient, ctx.Config)
-	Expect(err).ToNot(HaveOccurred())
-
-	ctx.Config.EncryptionKey = nil
-
-	var target bytes.Buffer
-	err = blobstoreClient.Get(ctx.GCSFileName, &target)
-	Expect(err).To(HaveOccurred())
-
-	session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-		"delete", ctx.GCSFileName)
-	Expect(err).ToNot(HaveOccurred())
-	Expect(session.ExitCode()).To(BeZero())
 }

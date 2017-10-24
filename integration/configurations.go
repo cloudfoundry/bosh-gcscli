@@ -17,7 +17,6 @@
 package integration
 
 import (
-	"crypto/sha256"
 	"fmt"
 	"os"
 
@@ -73,23 +72,6 @@ func getBaseConfigs() []TableEntry {
 	return []TableEntry{
 		Entry("Regional bucket, default StorageClass", regional),
 		Entry("MultiRegion bucket, default StorageClass", multiRegion),
-	}
-}
-
-// encryptionKeyBytes are used as the key in tests requiring encryption.
-var encryptionKeyBytes = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}
-
-// encryptionKeyBytesHash is the has of the encryptionKeyBytes
-//
-// Typical usage is ensuring the encryption key is actually used by GCS.
-var encryptionKeyBytesHash = sha256.Sum256(encryptionKeyBytes)
-
-func getEncryptedConfigs() []TableEntry {
-	cfg := getMultiRegionConfig()
-	cfg.EncryptionKey = encryptionKeyBytes
-
-	return []TableEntry{
-		Entry("MultiRegional bucket, default StorageClass, encrypted", cfg),
 	}
 }
 

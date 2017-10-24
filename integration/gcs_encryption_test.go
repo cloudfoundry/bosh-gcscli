@@ -17,10 +17,23 @@
 package integration
 
 import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+
+	"github.com/cloudfoundry/bosh-gcscli/client"
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 )
+
+// encryptionKeyBytes are used as the key in tests requiring encryption.
+var encryptionKeyBytes = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31}
+
+// encryptionKeyBytesHash is the has of the encryptionKeyBytes
+//
+// Typical usage is ensuring the encryption key is actually used by GCS.
+var encryptionKeyBytesHash = sha256.Sum256(encryptionKeyBytes)
 
 var _ = Describe("Integration", func() {
 	Context("general (Default Applicaton Credentials) configuration", func() {
@@ -29,36 +42,77 @@ var _ = Describe("Integration", func() {
 			cfg *config.GCSCli
 		)
 		BeforeEach(func() {
-			ctx = NewAssertContext(AsDefaultCredentials)
 			cfg = getMultiRegionConfig()
 			cfg.EncryptionKey = encryptionKeyBytes
 
+			ctx = NewAssertContext(AsDefaultCredentials)
+			ctx.AddConfig(cfg)
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
 
-		encryptedConfigs := getEncryptedConfigs()
+		// tests that a blob uploaded with a specified encryption_key can be downloaded again.
+		It("can perform encrypted lifecycle", func() {
+			AssertLifecycleWorks(gcsCLIPath, ctx)
+		})
 
-		DescribeTable("Get with correct encryption_key works",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertEncryptionWorks(gcsCLIPath, ctx)
-			},
-			encryptedConfigs...)
+		// tests that uploading a blob with encryption
+		// results in failure to download when the key is changed.
+		It("fails to get with the wrong encryption_key", func() {
+			Expect(ctx.Config.EncryptionKey).ToNot(BeNil(),
+				"Need encryption key for test")
 
-		DescribeTable("Get with wrong encryption_key should fail",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertWrongKeyEncryptionFails(gcsCLIPath, ctx)
-			},
-			encryptedConfigs...)
+			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+				"put", ctx.ContentFile, ctx.GCSFileName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session.ExitCode()).To(BeZero())
 
-		DescribeTable("Get with no encryption_key should fail",
-			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertNoKeyEncryptionFails(gcsCLIPath, ctx)
-			},
-			encryptedConfigs...)
+			_, gcsClient, err := client.NewSDK(*ctx.Config)
+			Expect(err).ToNot(HaveOccurred())
+			blobstoreClient, err := client.New(context.Background(),
+				gcsClient, ctx.Config)
+			Expect(err).ToNot(HaveOccurred())
+
+			ctx.Config.EncryptionKey[0]++
+
+			var target bytes.Buffer
+			err = blobstoreClient.Get(ctx.GCSFileName, &target)
+			Expect(err).To(HaveOccurred())
+
+			session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+				"delete", ctx.GCSFileName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session.ExitCode()).To(BeZero())
+		})
+
+		// tests that uploading a blob with encryption
+		// results in failure to download without encryption.
+		It("fails to get with no encryption_key", func() {
+			Expect(ctx.Config.EncryptionKey).ToNot(BeNil(),
+				"Need encryption key for test")
+
+			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+				"put", ctx.ContentFile, ctx.GCSFileName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session.ExitCode()).To(BeZero())
+
+			_, gcsClient, err := client.NewSDK(*ctx.Config)
+			Expect(err).ToNot(HaveOccurred())
+			blobstoreClient, err := client.New(context.Background(),
+				gcsClient, ctx.Config)
+			Expect(err).ToNot(HaveOccurred())
+
+			ctx.Config.EncryptionKey = nil
+
+			var target bytes.Buffer
+			err = blobstoreClient.Get(ctx.GCSFileName, &target)
+			Expect(err).To(HaveOccurred())
+
+			session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+				"delete", ctx.GCSFileName)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session.ExitCode()).To(BeZero())
+		})
 	})
 })
