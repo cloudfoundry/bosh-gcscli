@@ -59,15 +59,6 @@ func getBaseConfigs() ([]TableEntry, error) {
 			&config.GCSCli{
 				BucketName: multiRegional,
 			}),
-		Entry("Regional bucket, default StorageClass",
-			&config.GCSCli{
-				BucketName: regional,
-			}),
-		Entry("MultiRegional bucket, explicit StorageClass",
-			&config.GCSCli{
-				BucketName:   multiRegional,
-				StorageClass: "MULTI_REGIONAL",
-			}),
 		Entry("Regional bucket, explicit StorageClass",
 			&config.GCSCli{
 				BucketName:   regional,

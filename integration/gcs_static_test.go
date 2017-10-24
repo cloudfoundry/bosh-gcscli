@@ -33,12 +33,9 @@ var _ = Describe("Integration", func() {
 			ctx.Cleanup()
 		})
 
-		baseConfigs, baseConfigErr := getBaseConfigs()
-		encryptedConfigs, encryptedConfigErr := getEncryptedConfigs()
-		configurations := append(baseConfigs, encryptedConfigs...)
+		configurations, baseConfigErr := getBaseConfigs()
 		It("fetches configurations", func() {
 			Expect(baseConfigErr).To(BeNil(), "failed to get configurations")
-			Expect(encryptedConfigErr).To(BeNil(), "failed to get configurations")
 		})
 
 		DescribeTable("Blobstore lifecycle works",
