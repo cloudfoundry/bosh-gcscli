@@ -76,11 +76,8 @@ var encryptionKeyBytes = []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
 var encryptionKeyBytesHash = sha256.Sum256(encryptionKeyBytes)
 
 func getEncryptedConfigs() ([]TableEntry, error) {
-	var regional, multiRegional string
+	var multiRegional string
 	var err error
-	if regional, err = readBucketEnv(regionalBucketEnv); err != nil {
-		return nil, fmt.Errorf(getConfigErrMsg, "encrypted", err)
-	}
 	if multiRegional, err = readBucketEnv(multiRegionalBucketEnv); err != nil {
 		return nil, fmt.Errorf(getConfigErrMsg, "encrypted", err)
 	}
@@ -89,11 +86,6 @@ func getEncryptedConfigs() ([]TableEntry, error) {
 		Entry("MultiRegional bucket, default StorageClass, encrypted",
 			&config.GCSCli{
 				BucketName:    multiRegional,
-				EncryptionKey: encryptionKeyBytes,
-			}),
-		Entry("Regional bucket, default StorageClass, encrypted",
-			&config.GCSCli{
-				BucketName:    regional,
 				EncryptionKey: encryptionKeyBytes,
 			}),
 	}, nil
@@ -110,7 +102,7 @@ func getPublicConfig() (*config.GCSCli, error) {
 	}, nil
 }
 
-func getStorageCompatConfigs() ([]TableEntry, error) {
+func getInvalidStorageClassConfigs() ([]TableEntry, error) {
 	var regional, multiRegional string
 	var err error
 	if regional, err = readBucketEnv(regionalBucketEnv); err != nil {
@@ -121,11 +113,11 @@ func getStorageCompatConfigs() ([]TableEntry, error) {
 	}
 
 	return []TableEntry{
-		Entry("MultiRegional bucket, regional StorageClass", &config.GCSCli{
+		Entry("Multi-Region bucket, regional StorageClass", &config.GCSCli{
 			BucketName:   multiRegional,
 			StorageClass: "REGIONAL",
 		}),
-		Entry("Regional bucket, multiregional StorageClass", &config.GCSCli{
+		Entry("Regional bucket, Multi-Region StorageClass", &config.GCSCli{
 			BucketName:   regional,
 			StorageClass: "MULTI_REGIONAL",
 		}),

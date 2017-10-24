@@ -33,7 +33,7 @@ var _ = Describe("Integration", func() {
 			ctx.Cleanup()
 		})
 
-		configurations, configErr := getStorageCompatConfigs()
+		configurations, configErr := getInvalidStorageClassConfigs()
 		It("fetches configurations", func() {
 			Expect(configErr).To(BeNil(), "failed to get configurations")
 		})
