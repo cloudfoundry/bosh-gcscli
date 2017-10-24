@@ -43,7 +43,9 @@ function add_on_exit {
 }
 
 function clean_gcs {
-    make clean-gcs
+    pushd ${release_dir}
+        make clean-gcs
+    popd
 }
 
 function set_env {
