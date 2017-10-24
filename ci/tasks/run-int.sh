@@ -6,6 +6,7 @@ my_dir="$( cd $(dirname $0) && pwd )"
 pushd ${my_dir} > /dev/null
     source utils.sh
     set_env
+    gcloud_login
 popd > /dev/null
 
 pushd ${release_dir}
