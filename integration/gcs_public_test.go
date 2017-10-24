@@ -38,9 +38,7 @@ var _ = Describe("GCS Public Bucket", func() {
 		)
 
 		BeforeEach(func() {
-			var err error
-			cfg, err = getPublicConfig()
-			Expect(err).NotTo(HaveOccurred())
+			cfg = getPublicConfig()
 
 			ctx = NewAssertContext(AsDefaultCredentials)
 			ctx.AddConfig(cfg)

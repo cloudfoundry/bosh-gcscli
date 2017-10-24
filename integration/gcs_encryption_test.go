@@ -20,23 +20,25 @@ import (
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Integration", func() {
 	Context("general (Default Applicaton Credentials) configuration", func() {
-		var ctx AssertContext
+		var (
+			ctx AssertContext
+			cfg *config.GCSCli
+		)
 		BeforeEach(func() {
 			ctx = NewAssertContext(AsDefaultCredentials)
+			cfg = getMultiRegionConfig()
+			cfg.EncryptionKey = encryptionKeyBytes
+
 		})
 		AfterEach(func() {
 			ctx.Cleanup()
 		})
 
-		encryptedConfigs, configErr := getEncryptedConfigs()
-		It("fetches configurations", func() {
-			Expect(configErr).To(BeNil(), "failed to get configurations")
-		})
+		encryptedConfigs := getEncryptedConfigs()
 
 		DescribeTable("Get with correct encryption_key works",
 			func(config *config.GCSCli) {

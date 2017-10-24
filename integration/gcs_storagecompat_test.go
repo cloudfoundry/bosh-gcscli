@@ -20,7 +20,6 @@ import (
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Integration", func() {
@@ -33,10 +32,7 @@ var _ = Describe("Integration", func() {
 			ctx.Cleanup()
 		})
 
-		configurations, configErr := getInvalidStorageClassConfigs()
-		It("fetches configurations", func() {
-			Expect(configErr).To(BeNil(), "failed to get configurations")
-		})
+		configurations := getInvalidStorageClassConfigs()
 
 		DescribeTable("Invalid Put should fail",
 			func(config *config.GCSCli) {
