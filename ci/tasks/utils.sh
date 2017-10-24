@@ -41,3 +41,16 @@ function add_on_exit {
     trap on_exit EXIT
   fi
 }
+
+function clean_gcs {
+    make clean-gcs
+}
+
+function set_env {
+    export my_dir="$( cd $(dirname $0) && pwd )"
+    export release_dir="$( cd ${my_dir} && cd ../.. && pwd )"
+    export workspace_dir="$( cd ${release_dir} && cd ../../../.. && pwd )"
+
+    export GOPATH=${workspace_dir}
+    export PATH=${GOPATH}/bin:${PATH}
+}

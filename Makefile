@@ -91,15 +91,16 @@ prep-gcs: regional-bucket multiregional-bucket public-bucket
 
 # Remove all buckets listed in $StorageClass.lock files.
 clean-gcs:
-	test -s "multiregional.lock" && \
-	test -s "regional.lock" && \
-	test -s "public.lock"
+	@test -s "multiregional.lock" && test -s "regional.lock" && test -s "public.lock"
+	@gsutil rm "gs://$$(cat regional.lock)/*" || true
 	@gsutil rb "gs://$$(cat regional.lock)"
-	rm regional.lock
+	@rm regional.lock
+	@gsutil rm "gs://$$(cat multiregional.lock)/*" || true
 	@gsutil rb "gs://$$(cat multiregional.lock)"
-	rm multiregional.lock
+	@rm multiregional.lock
+	@gsutil rm "gs://$$(cat public.lock)/*" || true
 	@gsutil rb "gs://$$(cat public.lock)"
-	rm public.lock
+	@rm public.lock
 
 # Perform only unit tests
 test-unit: get-deps clean fmt lint vet build
