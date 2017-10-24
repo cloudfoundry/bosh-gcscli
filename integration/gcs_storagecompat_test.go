@@ -20,6 +20,7 @@ import (
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Integration", func() {
@@ -37,7 +38,11 @@ var _ = Describe("Integration", func() {
 		DescribeTable("Invalid Put should fail",
 			func(config *config.GCSCli) {
 				ctx.AddConfig(config)
-				AssertPutFails(gcsCLIPath, ctx)
+
+				session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+					"put", ctx.ContentFile, ctx.GCSFileName)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(session.ExitCode()).ToNot(BeZero())
 			},
 			configurations...)
 	})
