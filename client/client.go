@@ -109,6 +109,11 @@ func (client *GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 		return err
 	}
 
+	pos, err := src.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return fmt.Errorf("finding buffer position: %v", err)
+	}
+
 	var errs []error
 	for i := 0; i < retryAttempts; i++ {
 		err := client.putOnce(src, dest)
@@ -118,6 +123,10 @@ func (client *GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 
 		errs = append(errs, err)
 		log.Printf("upload failed for %s, attempt %d/%d: %v\n", dest, i+1, retryAttempts, err)
+
+		if _, err := src.Seek(pos, io.SeekStart); err != nil {
+			return fmt.Errorf("restting buffer position after failed upload: %v", err)
+		}
 	}
 
 	return fmt.Errorf("upload failed for %s after %d attempts: %v", dest, retryAttempts, errs)
