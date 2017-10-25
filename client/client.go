@@ -75,15 +75,13 @@ func (client GCSBlobstore) getObjectHandle(src string) *storage.ObjectHandle {
 func New(ctx context.Context, gcsClient *storage.Client,
 	gcscliConfig *config.GCSCli) (GCSBlobstore, error) {
 	if gcsClient == nil {
-		return GCSBlobstore{},
-			errors.New("nil client causes invalid blobstore")
+		return GCSBlobstore{}, errors.New("nil client causes invalid blobstore")
 	}
 	if gcscliConfig == nil {
-		return GCSBlobstore{},
-			errors.New("nil config causes invalid blobstore")
+		return GCSBlobstore{}, errors.New("nil config causes invalid blobstore")
 	}
-	blobstore := GCSBlobstore{gcsClient, gcscliConfig}
-	return blobstore, blobstore.validateRemoteConfig()
+
+	return GCSBlobstore{gcsClient, gcscliConfig}, nil
 }
 
 // Get fetches a blob from the GCS blobstore.
@@ -106,6 +104,10 @@ func (client GCSBlobstore) Get(src string, dest io.Writer) error {
 func (client GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 	if client.config.IsReadOnly() {
 		return ErrInvalidROWriteOperation
+	}
+
+	if err := client.validateRemoteConfig(); err != nil {
+		return err
 	}
 
 	remoteWriter := client.getObjectHandle(dest).NewWriter(context.Background())
