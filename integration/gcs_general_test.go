@@ -95,10 +95,17 @@ var _ = Describe("Integration", func() {
 			},
 			configurations...)
 
-		// Perform a large file put causing GCS to do a multi-part upload
-		DescribeTable("Multipart Put works",
-			func(config *config.GCSCli) {
-				env.AddConfig(config)
+		Context("with a regional bucket", func() {
+			var cfg *config.GCSCli
+			BeforeEach(func() {
+				cfg = getRegionalConfig()
+				env.AddConfig(cfg)
+			})
+			AfterEach(func() {
+				env.Cleanup()
+			})
+
+			It("can perform large file upload (multi-part)", func() {
 				if os.Getenv(NoLongEnv) != "" {
 					Skip(fmt.Sprintf(NoLongMsg, NoLongEnv))
 				}
@@ -114,8 +121,8 @@ var _ = Describe("Integration", func() {
 
 				blobstoreClient.Delete(env.GCSFileName)
 				Expect(err).ToNot(HaveOccurred())
-			},
-			configurations...)
+			})
+		})
 
 		DescribeTable("Invalid Put should fail",
 			func(config *config.GCSCli) {
