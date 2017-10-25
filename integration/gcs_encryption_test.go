@@ -18,7 +18,6 @@ package integration
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
@@ -38,50 +37,48 @@ var encryptionKeyBytesHash = sha256.Sum256(encryptionKeyBytes)
 var _ = Describe("Integration", func() {
 	Context("general (Default Applicaton Credentials) configuration", func() {
 		var (
-			ctx AssertContext
+			env AssertContext
 			cfg *config.GCSCli
 		)
 		BeforeEach(func() {
 			cfg = getMultiRegionConfig()
 			cfg.EncryptionKey = encryptionKeyBytes
 
-			ctx = NewAssertContext(AsDefaultCredentials)
-			ctx.AddConfig(cfg)
+			env = NewAssertContext(AsDefaultCredentials)
+			env.AddConfig(cfg)
 		})
 		AfterEach(func() {
-			ctx.Cleanup()
+			env.Cleanup()
 		})
 
 		// tests that a blob uploaded with a specified encryption_key can be downloaded again.
 		It("can perform encrypted lifecycle", func() {
-			AssertLifecycleWorks(gcsCLIPath, ctx)
+			AssertLifecycleWorks(gcsCLIPath, env)
 		})
 
 		// tests that uploading a blob with encryption
 		// results in failure to download when the key is changed.
 		It("fails to get with the wrong encryption_key", func() {
-			Expect(ctx.Config.EncryptionKey).ToNot(BeNil(),
+			Expect(env.Config.EncryptionKey).ToNot(BeNil(),
 				"Need encryption key for test")
 
-			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-				"put", ctx.ContentFile, ctx.GCSFileName)
+			session, err := RunGCSCLI(gcsCLIPath, env.ConfigPath,
+				"put", env.ContentFile, env.GCSFileName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).To(BeZero())
 
-			_, gcsClient, err := client.NewSDK(*ctx.Config)
+			gcsClient, err := client.NewSDK(env.ctx, *env.Config)
 			Expect(err).ToNot(HaveOccurred())
-			blobstoreClient, err := client.New(context.Background(),
-				gcsClient, ctx.Config)
+			blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
 			Expect(err).ToNot(HaveOccurred())
 
-			ctx.Config.EncryptionKey[0]++
+			env.Config.EncryptionKey[0]++
 
 			var target bytes.Buffer
-			err = blobstoreClient.Get(ctx.GCSFileName, &target)
+			err = blobstoreClient.Get(env.GCSFileName, &target)
 			Expect(err).To(HaveOccurred())
 
-			session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-				"delete", ctx.GCSFileName)
+			session, err = RunGCSCLI(gcsCLIPath, env.ConfigPath, "delete", env.GCSFileName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).To(BeZero())
 		})
@@ -89,28 +86,25 @@ var _ = Describe("Integration", func() {
 		// tests that uploading a blob with encryption
 		// results in failure to download without encryption.
 		It("fails to get with no encryption_key", func() {
-			Expect(ctx.Config.EncryptionKey).ToNot(BeNil(),
+			Expect(env.Config.EncryptionKey).ToNot(BeNil(),
 				"Need encryption key for test")
 
-			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-				"put", ctx.ContentFile, ctx.GCSFileName)
+			session, err := RunGCSCLI(gcsCLIPath, env.ConfigPath, "put", env.ContentFile, env.GCSFileName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).To(BeZero())
 
-			_, gcsClient, err := client.NewSDK(*ctx.Config)
+			gcsClient, err := client.NewSDK(env.ctx, *env.Config)
 			Expect(err).ToNot(HaveOccurred())
-			blobstoreClient, err := client.New(context.Background(),
-				gcsClient, ctx.Config)
+			blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
 			Expect(err).ToNot(HaveOccurred())
 
-			ctx.Config.EncryptionKey = nil
+			env.Config.EncryptionKey = nil
 
 			var target bytes.Buffer
-			err = blobstoreClient.Get(ctx.GCSFileName, &target)
+			err = blobstoreClient.Get(env.GCSFileName, &target)
 			Expect(err).To(HaveOccurred())
 
-			session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-				"delete", ctx.GCSFileName)
+			session, err = RunGCSCLI(gcsCLIPath, env.ConfigPath, "delete", env.GCSFileName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).To(BeZero())
 		})

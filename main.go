@@ -24,6 +24,7 @@ import (
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
 	"github.com/cloudfoundry/bosh-gcscli/config"
+	"golang.org/x/net/context"
 )
 
 var version string
@@ -112,7 +113,8 @@ func main() {
 		log.Fatalf("reading config %s: %v\n", *configPath, err)
 	}
 
-	ctx, gcsClient, err := client.NewSDK(gcsConfig)
+	ctx := context.Background()
+	gcsClient, err := client.NewSDK(ctx, gcsConfig)
 	if err != nil {
 		log.Fatalf("creating gcs sdk: %v\n", err)
 	}

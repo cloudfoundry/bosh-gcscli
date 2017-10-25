@@ -25,6 +25,7 @@ import (
 	"io/ioutil"
 
 	. "github.com/onsi/gomega"
+	"golang.org/x/net/context"
 )
 
 // GoogleAppCredentialsEnv is the environment variable
@@ -69,6 +70,9 @@ type AssertContext struct {
 	// options are the AssertContextConfigOption which are used to modify
 	// the configuration whenever AddConfig is called.
 	options []AssertContextConfigOption
+
+	// ctx is the context used by the individual test
+	ctx context.Context
 }
 
 // NewAssertContext returns an AssertContext with all fields
@@ -86,6 +90,7 @@ func NewAssertContext(options ...AssertContextConfigOption) AssertContext {
 		GCSFileName:        GenerateRandomString(),
 		serviceAccountFile: serviceAccountFile,
 		options:            options,
+		ctx:                context.Background(),
 	}
 }
 

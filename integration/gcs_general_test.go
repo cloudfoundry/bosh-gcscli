@@ -17,7 +17,6 @@
 package integration
 
 import (
-	"context"
 	"crypto/rand"
 	"fmt"
 	"io"
@@ -68,29 +67,29 @@ func (brs *badReadSeeker) Seek(offset int64, whenc int) (n int64, err error) {
 
 var _ = Describe("Integration", func() {
 	Context("general (Default Applicaton Credentials) configuration", func() {
-		var ctx AssertContext
+		var env AssertContext
 		BeforeEach(func() {
-			ctx = NewAssertContext(AsDefaultCredentials)
+			env = NewAssertContext(AsDefaultCredentials)
 		})
 		AfterEach(func() {
-			ctx.Cleanup()
+			env.Cleanup()
 		})
 
 		configurations := getBaseConfigs()
 
 		DescribeTable("Blobstore lifecycle works",
 			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
-				AssertLifecycleWorks(gcsCLIPath, ctx)
+				env.AddConfig(config)
+				AssertLifecycleWorks(gcsCLIPath, env)
 			},
 			configurations...)
 
 		DescribeTable("Delete silently ignores that the file doesn't exist",
 			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
+				env.AddConfig(config)
 
-				session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-					"delete", ctx.GCSFileName)
+				session, err := RunGCSCLI(gcsCLIPath, env.ConfigPath,
+					"delete", env.GCSFileName)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(session.ExitCode()).To(BeZero())
 			},
@@ -99,7 +98,7 @@ var _ = Describe("Integration", func() {
 		// Perform a large file put causing GCS to do a multi-part upload
 		DescribeTable("Multipart Put works",
 			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
+				env.AddConfig(config)
 				if os.Getenv(NoLongEnv) != "" {
 					Skip(fmt.Sprintf(NoLongMsg, NoLongEnv))
 				}
@@ -107,41 +106,39 @@ var _ = Describe("Integration", func() {
 				const twoGB = 1024 * 1024 * 1024 * 2
 				limited := newrandReadSeeker(twoGB)
 
-				_, gcsClient, err := client.NewSDK(*ctx.Config)
+				gcsClient, err := client.NewSDK(env.ctx, *env.Config)
 				Expect(err).ToNot(HaveOccurred())
-				blobstoreClient, err := client.New(context.Background(),
-					gcsClient, ctx.Config)
-				Expect(err).ToNot(HaveOccurred())
-
-				err = blobstoreClient.Put(&limited, ctx.GCSFileName)
+				blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
 				Expect(err).ToNot(HaveOccurred())
 
-				blobstoreClient.Delete(ctx.GCSFileName)
+				err = blobstoreClient.Put(&limited, env.GCSFileName)
+				Expect(err).ToNot(HaveOccurred())
+
+				blobstoreClient.Delete(env.GCSFileName)
 				Expect(err).ToNot(HaveOccurred())
 			},
 			configurations...)
 
 		DescribeTable("Invalid Put should fail",
 			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
+				env.AddConfig(config)
 
-				_, gcsClient, err := client.NewSDK(*ctx.Config)
+				gcsClient, err := client.NewSDK(env.ctx, *env.Config)
 				Expect(err).ToNot(HaveOccurred())
-				blobstoreClient, err := client.New(context.Background(),
-					gcsClient, ctx.Config)
+				blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
 				Expect(err).ToNot(HaveOccurred())
 
-				err = blobstoreClient.Put(&badReadSeeker{}, ctx.GCSFileName)
+				err = blobstoreClient.Put(&badReadSeeker{}, env.GCSFileName)
 				Expect(err).To(HaveOccurred())
 			},
 			configurations...)
 
 		DescribeTable("Invalid Get should fail",
 			func(config *config.GCSCli) {
-				ctx.AddConfig(config)
+				env.AddConfig(config)
 
-				session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-					"get", ctx.GCSFileName, "/dev/null")
+				session, err := RunGCSCLI(gcsCLIPath, env.ConfigPath,
+					"get", env.GCSFileName, "/dev/null")
 				Expect(err).ToNot(HaveOccurred())
 				Expect(session.ExitCode()).ToNot(BeZero())
 				Expect(session.Err.Contents()).To(ContainSubstring("object doesn't exist"))

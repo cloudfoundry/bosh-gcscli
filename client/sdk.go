@@ -34,11 +34,8 @@ import (
 
 const uaString = "bosh-gcscli"
 
-// NewSDK returns context and client necessary to instantiate a client
-// based off of the provided configuration.
-func NewSDK(c config.GCSCli) (context.Context, *storage.Client, error) {
-	ctx := context.Background()
-
+// NewSDK builds the GCS SDK client from a valid config.GCSCli
+func NewSDK(ctx context.Context, c config.GCSCli) (*storage.Client, error) {
 	var client *storage.Client
 	var err error
 	ua := option.WithUserAgent(uaString)
@@ -46,8 +43,7 @@ func NewSDK(c config.GCSCli) (context.Context, *storage.Client, error) {
 	switch c.CredentialsSource {
 	case config.ApplicationDefaultCredentialsSource:
 		var tokenSource oauth2.TokenSource
-		tokenSource, err = google.DefaultTokenSource(ctx,
-			storage.ScopeFullControl)
+		tokenSource, err = google.DefaultTokenSource(ctx, storage.ScopeFullControl)
 		if err == nil {
 			opt = option.WithTokenSource(tokenSource)
 		}
@@ -55,8 +51,7 @@ func NewSDK(c config.GCSCli) (context.Context, *storage.Client, error) {
 		opt = option.WithHTTPClient(http.DefaultClient)
 	case config.ServiceAccountFileCredentialsSource:
 		var token *jwt.Config
-		token, err = google.JWTConfigFromJSON([]byte(c.ServiceAccountFile),
-			storage.ScopeFullControl)
+		token, err = google.JWTConfigFromJSON([]byte(c.ServiceAccountFile), storage.ScopeFullControl)
 		if err == nil {
 			tokenSource := token.TokenSource(ctx)
 			opt = option.WithTokenSource(tokenSource)
@@ -65,9 +60,8 @@ func NewSDK(c config.GCSCli) (context.Context, *storage.Client, error) {
 		err = errors.New("unknown credentials_source in configuration")
 	}
 	if err != nil {
-		return ctx, client, err
+		return client, err
 	}
 
-	client, err = storage.NewClient(ctx, ua, opt)
-	return ctx, client, err
+	return storage.NewClient(ctx, ua, opt)
 }
