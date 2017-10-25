@@ -34,10 +34,9 @@ var ErrInvalidROWriteOperation = errors.New("the client operates in read only mo
 
 // GCSBlobstore encapsulates interaction with the GCS blobstore
 type GCSBlobstore struct {
-	// gcsClient is a pre-configured storage.Client.
-	client *storage.Client
-	// gcscliConfig is the configuration for interactions with the blobstore
-	config *config.GCSCli
+	gcs      *storage.Client
+	config   *config.GCSCli
+	readOnly bool
 }
 
 // validateRemoteConfig determines if the configuration of the client matches
@@ -46,11 +45,11 @@ type GCSBlobstore struct {
 // If operating in read-only mode, no mutations can be performed
 // so the remote bucket location is always compatible.
 func (client *GCSBlobstore) validateRemoteConfig() error {
-	if client.config.IsReadOnly() {
+	if client.readOnly {
 		return nil
 	}
 
-	bucket := client.client.Bucket(client.config.BucketName)
+	bucket := client.gcs.Bucket(client.config.BucketName)
 	attrs, err := bucket.Attrs(context.Background())
 	if err != nil {
 		return err
@@ -60,35 +59,33 @@ func (client *GCSBlobstore) validateRemoteConfig() error {
 
 // getObjectHandle returns a handle to an object at src.
 func (client GCSBlobstore) getObjectHandle(src string) *storage.ObjectHandle {
-	handle := client.client.Bucket(client.config.BucketName).Object(src)
+	handle := client.gcs.Bucket(client.config.BucketName).Object(src)
 	if client.config.EncryptionKey != nil {
 		handle = handle.Key(client.config.EncryptionKey)
 	}
 	return handle
 }
 
-// New returns a BlobstoreClient configured to operate using the given config
-// and client.
+// New returns a GCSBlobstore configured to operate using the given config
 //
-// non-nil error is returned on invalid client or config. If the configuration
+// non-nil error is returned on invalid Client or config. If the configuration
 // is incompatible with the GCS bucket, a non-nil error is also returned.
-func New(ctx context.Context, gcsClient *storage.Client,
-	gcscliConfig *config.GCSCli) (GCSBlobstore, error) {
-	if gcsClient == nil {
-		return GCSBlobstore{},
-			errors.New("nil client causes invalid blobstore")
+func New(ctx context.Context, cfg *config.GCSCli) (*GCSBlobstore, error) {
+	if cfg == nil {
+		return nil, errors.New("expected non-nill config object")
 	}
-	if gcscliConfig == nil {
-		return GCSBlobstore{},
-			errors.New("nil config causes invalid blobstore")
+
+	storageClient, readOnly, err := newStorageClient(ctx, cfg)
+	if err != nil {
+		return nil, fmt.Errorf("creating storage client: %v", err)
 	}
-	blobstore := GCSBlobstore{gcsClient, gcscliConfig}
-	return blobstore, blobstore.validateRemoteConfig()
+
+	return &GCSBlobstore{gcs: storageClient, config: cfg, readOnly: readOnly}, nil
 }
 
 // Get fetches a blob from the GCS blobstore.
 // Destination will be overwritten if it already exists.
-func (client GCSBlobstore) Get(src string, dest io.Writer) error {
+func (client *GCSBlobstore) Get(src string, dest io.Writer) error {
 	remoteReader, err := client.getObjectHandle(src).NewReader(context.Background())
 	if err != nil {
 		return err
@@ -100,28 +97,58 @@ func (client GCSBlobstore) Get(src string, dest io.Writer) error {
 // Put uploads a blob to the GCS blobstore.
 // Destination will be overwritten if it already exists.
 //
-// Put does not retry if upload fails. This is a change from s3cli/client
-// which does retry an upload multiple times.
-// TODO: implement retry
-func (client GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
-	if client.config.IsReadOnly() {
+// Put retries retryAttempts times
+const retryAttempts = 3
+
+func (client *GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
+	if client.readOnly {
 		return ErrInvalidROWriteOperation
 	}
 
+	if err := client.validateRemoteConfig(); err != nil {
+		return err
+	}
+
+	pos, err := src.Seek(0, io.SeekCurrent)
+	if err != nil {
+		return fmt.Errorf("finding buffer position: %v", err)
+	}
+
+	var errs []error
+	for i := 0; i < retryAttempts; i++ {
+		err := client.putOnce(src, dest)
+		if err == nil {
+			return nil
+		}
+
+		errs = append(errs, err)
+		log.Printf("upload failed for %s, attempt %d/%d: %v\n", dest, i+1, retryAttempts, err)
+
+		if _, err := src.Seek(pos, io.SeekStart); err != nil {
+			return fmt.Errorf("restting buffer position after failed upload: %v", err)
+		}
+	}
+
+	return fmt.Errorf("upload failed for %s after %d attempts: %v", dest, retryAttempts, errs)
+}
+
+func (client *GCSBlobstore) putOnce(src io.ReadSeeker, dest string) error {
 	remoteWriter := client.getObjectHandle(dest).NewWriter(context.Background())
 	remoteWriter.ObjectAttrs.StorageClass = client.config.StorageClass
+
 	if _, err := io.Copy(remoteWriter, src); err != nil {
-		log.Println("Upload failed", err.Error())
-		return fmt.Errorf("upload failure: %s", err.Error())
+		remoteWriter.CloseWithError(err)
+		return err
 	}
+
 	return remoteWriter.Close()
 }
 
 // Delete removes a blob from from the GCS blobstore.
 //
 // If the object does not exist, Delete returns a nil error.
-func (client GCSBlobstore) Delete(dest string) error {
-	if client.config.IsReadOnly() {
+func (client *GCSBlobstore) Delete(dest string) error {
+	if client.readOnly {
 		return ErrInvalidROWriteOperation
 	}
 
@@ -133,7 +160,7 @@ func (client GCSBlobstore) Delete(dest string) error {
 }
 
 // Exists checks if a blob exists in the GCS blobstore.
-func (client GCSBlobstore) Exists(dest string) (bool, error) {
+func (client *GCSBlobstore) Exists(dest string) (bool, error) {
 	_, err := client.getObjectHandle(dest).Attrs(context.Background())
 	if err == nil {
 		log.Printf("File '%s' exists in bucket '%s'\n",

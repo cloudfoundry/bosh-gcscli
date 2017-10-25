@@ -20,7 +20,6 @@ import (
 	"context"
 	"errors"
 
-	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
 	"google.golang.org/api/option"
@@ -29,45 +28,34 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/cloudfoundry/bosh-gcscli/config"
-	"golang.org/x/oauth2/jwt"
 )
 
 const uaString = "bosh-gcscli"
 
-// NewSDK returns context and client necessary to instantiate a client
-// based off of the provided configuration.
-func NewSDK(c config.GCSCli) (context.Context, *storage.Client, error) {
-	ctx := context.Background()
+func newStorageClient(ctx context.Context, cfg *config.GCSCli) (*storage.Client, bool, error) {
+	// default to a read-only client
+	readOnly := true
+	opt := option.WithHTTPClient(http.DefaultClient)
 
-	var client *storage.Client
-	var err error
-	ua := option.WithUserAgent(uaString)
-	var opt option.ClientOption
-	switch c.CredentialsSource {
-	case config.ApplicationDefaultCredentialsSource:
-		var tokenSource oauth2.TokenSource
-		tokenSource, err = google.DefaultTokenSource(ctx,
-			storage.ScopeFullControl)
-		if err == nil {
-			opt = option.WithTokenSource(tokenSource)
-		}
+	switch cfg.CredentialsSource {
 	case config.NoneCredentialsSource:
-		opt = option.WithHTTPClient(http.DefaultClient)
-	case config.ServiceAccountFileCredentialsSource:
-		var token *jwt.Config
-		token, err = google.JWTConfigFromJSON([]byte(c.ServiceAccountFile),
-			storage.ScopeFullControl)
-		if err == nil {
-			tokenSource := token.TokenSource(ctx)
+		// no-op
+	case config.DefaultCredentialsSource:
+		// attempt to load the application default credentials
+		if tokenSource, err := google.DefaultTokenSource(ctx, storage.ScopeFullControl); err == nil {
 			opt = option.WithTokenSource(tokenSource)
+			readOnly = false
+		}
+	case config.ServiceAccountFileCredentialsSource:
+		if token, err := google.JWTConfigFromJSON([]byte(cfg.ServiceAccountFile), storage.ScopeFullControl); err == nil {
+			opt = option.WithTokenSource(token.TokenSource(ctx))
+			readOnly = false
 		}
 	default:
-		err = errors.New("unknown credentials_source in configuration")
-	}
-	if err != nil {
-		return ctx, client, err
+		return nil, false, errors.New("unknown credentials_source in configuration")
 	}
 
-	client, err = storage.NewClient(ctx, ua, opt)
-	return ctx, client, err
+	gcs, err := storage.NewClient(ctx, option.WithUserAgent(uaString), opt)
+
+	return gcs, readOnly, err
 }

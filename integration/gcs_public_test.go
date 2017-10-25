@@ -32,104 +32,80 @@ import (
 var _ = Describe("GCS Public Bucket", func() {
 	Context("with read-only configuration", func() {
 		var (
-			ctx AssertContext
-			cfg *config.GCSCli
+			setupEnv  AssertContext
+			publicEnv AssertContext
+			cfg       *config.GCSCli
 		)
 
 		BeforeEach(func() {
-			var err error
-			cfg, err = getPublicConfig()
-			Expect(err).NotTo(HaveOccurred())
+			cfg = getPublicConfig()
 
-			ctx = NewAssertContext(AsDefaultCredentials)
-			ctx.AddConfig(cfg)
+			setupEnv = NewAssertContext(AsDefaultCredentials)
+			setupEnv.AddConfig(cfg)
+			Expect(setupEnv.Config.CredentialsSource).ToNot(Equal(config.NoneCredentialsSource), "Cannot use 'none' credentials to setup")
+
+			publicEnv = setupEnv.Clone(AsReadOnlyCredentials)
 		})
 		AfterEach(func() {
-			ctx.Cleanup()
+			setupEnv.Cleanup()
+			publicEnv.Cleanup()
 		})
 
 		Describe("with a public file", func() {
 			BeforeEach(func() {
-				Expect(ctx.Config.CredentialsSource).ToNot(Equal(config.NoneCredentialsSource),
-					"Cannot use 'none' credentials to setup")
+				// Place a file in the bucket
+				RunGCSCLI(gcsCLIPath, setupEnv.ConfigPath, "put", setupEnv.ContentFile, setupEnv.GCSFileName)
 
-				session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-					"put", ctx.ContentFile, ctx.GCSFileName)
+				// Make the file public
+				rwClient, err := newSDK(setupEnv.ctx, *setupEnv.Config)
+				Expect(err).ToNot(HaveOccurred())
+				bucket := rwClient.Bucket(setupEnv.Config.BucketName)
+				obj := bucket.Object(setupEnv.GCSFileName)
+				Expect(obj.ACL().Set(context.Background(), storage.AllUsers, storage.RoleReader)).To(Succeed())
+			})
+			AfterEach(func() {
+				RunGCSCLI(gcsCLIPath, setupEnv.ConfigPath, "delete", setupEnv.GCSFileName)
+				publicEnv.Cleanup()
+			})
+
+			It("can check if it exists", func() {
+				session, err := RunGCSCLI(gcsCLIPath, publicEnv.ConfigPath, "exists", setupEnv.GCSFileName)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(session.ExitCode()).To(BeZero())
-
-				_, rwClient, err := client.NewSDK(*ctx.Config)
-				Expect(err).ToNot(HaveOccurred())
-				bucket := rwClient.Bucket(ctx.Config.BucketName)
-				obj := bucket.Object(ctx.GCSFileName)
-				err = obj.ACL().Set(context.Background(),
-					storage.AllUsers, storage.RoleReader)
-				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("can get", func() {
-				roctx := ctx.Clone(AsReadOnlyCredentials)
-				defer roctx.Cleanup()
-
 				tmpLocalFile, err := ioutil.TempFile("", "gcscli-download")
 				Expect(err).ToNot(HaveOccurred())
-				defer func() { _ = os.Remove(tmpLocalFile.Name()) }()
-				err = tmpLocalFile.Close()
-				Expect(err).ToNot(HaveOccurred())
+				defer os.Remove(tmpLocalFile.Name())
+				Expect(tmpLocalFile.Close()).To(Succeed())
 
-				session, err := RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-					"get", ctx.GCSFileName, tmpLocalFile.Name())
+				session, err := RunGCSCLI(gcsCLIPath, publicEnv.ConfigPath, "get", setupEnv.GCSFileName, tmpLocalFile.Name())
 				Expect(err).ToNot(HaveOccurred())
-				Expect(session.ExitCode()).To(BeZero(),
-					fmt.Sprintf("unexpected '%s'", session.Err.Contents()))
+				Expect(session.ExitCode()).To(BeZero(), fmt.Sprintf("unexpected '%s'", session.Err.Contents()))
 
 				gottenBytes, err := ioutil.ReadFile(tmpLocalFile.Name())
 				Expect(err).ToNot(HaveOccurred())
-				Expect(string(gottenBytes)).To(Equal(ctx.ExpectedString))
-			})
-
-			AfterEach(func() {
-				session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-					"delete", ctx.GCSFileName)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(session.ExitCode()).To(BeZero())
+				Expect(string(gottenBytes)).To(Equal(setupEnv.ExpectedString))
 			})
 		})
 
 		It("fails to get a missing file", func() {
-			roctx := ctx.Clone(AsReadOnlyCredentials)
-			defer roctx.Cleanup()
-
-			session, err := RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-				"get", ctx.GCSFileName, "/dev/null")
+			session, err := RunGCSCLI(gcsCLIPath, publicEnv.ConfigPath, "get", setupEnv.GCSFileName, "/dev/null")
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).ToNot(BeZero())
 			Expect(session.Err.Contents()).To(ContainSubstring("object doesn't exist"))
 		})
 
 		It("fails to put", func() {
-			Expect(ctx.Config.CredentialsSource).ToNot(Equal(config.NoneCredentialsSource),
-				"Cannot use 'none' credentials to setup")
-
-			roctx := ctx.Clone(AsReadOnlyCredentials)
-			defer roctx.Cleanup()
-
-			session, err := RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-				"put", roctx.ContentFile, roctx.GCSFileName)
+			session, err := RunGCSCLI(gcsCLIPath, publicEnv.ConfigPath, "put", publicEnv.ContentFile, publicEnv.GCSFileName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).ToNot(BeZero())
 			Expect(session.Err.Contents()).To(ContainSubstring(client.ErrInvalidROWriteOperation.Error()))
 		})
 
 		It("fails to delete", func() {
-			Expect(ctx.Config.CredentialsSource).ToNot(Equal(config.NoneCredentialsSource),
-				"Cannot use 'none' credentials to setup")
-
-			roctx := ctx.Clone(AsReadOnlyCredentials)
-			defer roctx.Cleanup()
-
-			session, err := RunGCSCLI(gcsCLIPath, roctx.ConfigPath,
-				"delete", roctx.GCSFileName)
+			session, err := RunGCSCLI(gcsCLIPath, publicEnv.ConfigPath, "delete", publicEnv.GCSFileName)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).ToNot(BeZero())
 			Expect(session.Err.Contents()).To(ContainSubstring(client.ErrInvalidROWriteOperation.Error()))
