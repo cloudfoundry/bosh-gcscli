@@ -97,9 +97,9 @@ func (client *GCSBlobstore) Get(src string, dest io.Writer) error {
 // Put uploads a blob to the GCS blobstore.
 // Destination will be overwritten if it already exists.
 //
-// Put does not retry if upload fails. This is a change from s3cli/client
-// which does retry an upload multiple times.
-// TODO: implement retry
+// Put retries retryAttempts times
+const retryAttempts = 3
+
 func (client *GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 	if client.readOnly {
 		return ErrInvalidROWriteOperation
@@ -109,12 +109,29 @@ func (client *GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 		return err
 	}
 
+	var errs []error
+	for i := 0; i < retryAttempts; i++ {
+		err := client.putOnce(src, dest)
+		if err == nil {
+			return nil
+		}
+
+		errs = append(errs, err)
+		log.Printf("upload failed for %s, attempt %d/%d: %v\n", dest, i+1, retryAttempts, err)
+	}
+
+	return fmt.Errorf("upload failed for %s after %d attempts: %v", dest, retryAttempts, errs)
+}
+
+func (client *GCSBlobstore) putOnce(src io.ReadSeeker, dest string) error {
 	remoteWriter := client.getObjectHandle(dest).NewWriter(context.Background())
 	remoteWriter.ObjectAttrs.StorageClass = client.config.StorageClass
+
 	if _, err := io.Copy(remoteWriter, src); err != nil {
-		log.Println("Upload failed", err.Error())
-		return fmt.Errorf("upload failure: %s", err.Error())
+		remoteWriter.CloseWithError(err)
+		return err
 	}
+
 	return remoteWriter.Close()
 }
 
