@@ -76,6 +76,10 @@ The command line tool expects a JSON configuration file. Run `bosh-gcscli --help
 * A Makefile is provided that automates integration testing. Try `make help` to get started.
 * [gvt](https://godoc.org/github.com/FiloSottile/gvt) is used for vendoring.
 
+## Contributing
+
+For details on how to contribute to this project - including filing bug reports and contributing code changes - please see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## License
 
 This tool is licensed under Apache 2.0. Full license text is available in [LICENSE](LICENSE).
