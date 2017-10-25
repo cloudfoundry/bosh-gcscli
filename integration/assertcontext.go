@@ -151,7 +151,7 @@ func AsDefaultCredentials(ctx *AssertContext) {
 	ctx.serviceAccountPath = tempFile.Name()
 	os.Setenv(GoogleAppCredentialsEnv, ctx.serviceAccountPath)
 
-	conf.CredentialsSource = config.ApplicationDefaultCredentialsSource
+	conf.CredentialsSource = config.DefaultCredentialsSource
 }
 
 // Clone returns a new AssertContext configured using the provided options.

@@ -17,12 +17,21 @@
 package integration
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
+
+	"cloud.google.com/go/storage"
 
 	"github.com/cloudfoundry/bosh-gcscli/config"
 
 	. "github.com/onsi/ginkgo/extensions/table"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/jwt"
+	"google.golang.org/api/option"
 )
 
 const regionalBucketEnv = "REGIONAL_BUCKET_NAME"
@@ -97,4 +106,36 @@ func getInvalidStorageClassConfigs() []TableEntry {
 		Entry("Multi-Region bucket, regional StorageClass", regional),
 		Entry("Regional bucket, Multi-Region StorageClass", multiRegion),
 	}
+}
+
+// newSDK builds the GCS SDK Client from a valid config.GCSCli
+// TODO: Simplify and remove this. Tests should expect a single config and use it.
+func newSDK(ctx context.Context, c config.GCSCli) (*storage.Client, error) {
+	var client *storage.Client
+	var err error
+	var opt option.ClientOption
+	switch c.CredentialsSource {
+	case config.DefaultCredentialsSource:
+		var tokenSource oauth2.TokenSource
+		tokenSource, err = google.DefaultTokenSource(ctx, storage.ScopeFullControl)
+		if err == nil {
+			opt = option.WithTokenSource(tokenSource)
+		}
+	case config.NoneCredentialsSource:
+		opt = option.WithHTTPClient(http.DefaultClient)
+	case config.ServiceAccountFileCredentialsSource:
+		var token *jwt.Config
+		token, err = google.JWTConfigFromJSON([]byte(c.ServiceAccountFile), storage.ScopeFullControl)
+		if err == nil {
+			tokenSource := token.TokenSource(ctx)
+			opt = option.WithTokenSource(tokenSource)
+		}
+	default:
+		err = errors.New("unknown credentials_source in configuration")
+	}
+	if err != nil {
+		return client, err
+	}
+
+	return storage.NewClient(ctx, opt)
 }

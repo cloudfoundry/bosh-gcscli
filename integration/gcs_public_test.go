@@ -57,7 +57,7 @@ var _ = Describe("GCS Public Bucket", func() {
 				RunGCSCLI(gcsCLIPath, setupEnv.ConfigPath, "put", setupEnv.ContentFile, setupEnv.GCSFileName)
 
 				// Make the file public
-				rwClient, err := client.NewSDK(setupEnv.ctx, *setupEnv.Config)
+				rwClient, err := newSDK(setupEnv.ctx, *setupEnv.Config)
 				Expect(err).ToNot(HaveOccurred())
 				bucket := rwClient.Bucket(setupEnv.Config.BucketName)
 				obj := bucket.Object(setupEnv.GCSFileName)

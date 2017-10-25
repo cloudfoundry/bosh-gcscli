@@ -114,12 +114,7 @@ func main() {
 	}
 
 	ctx := context.Background()
-	gcsClient, err := client.NewSDK(ctx, gcsConfig)
-	if err != nil {
-		log.Fatalf("creating gcs sdk: %v\n", err)
-	}
-
-	blobstoreClient, err := client.New(ctx, gcsClient, &gcsConfig)
+	blobstoreClient, err := client.New(ctx, &gcsConfig)
 	if err != nil {
 		log.Fatalf("creating gcs client: %v\n", err)
 	}

@@ -67,9 +67,7 @@ var _ = Describe("Integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).To(BeZero())
 
-			gcsClient, err := client.NewSDK(env.ctx, *env.Config)
-			Expect(err).ToNot(HaveOccurred())
-			blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
+			blobstoreClient, err := client.New(env.ctx, env.Config)
 			Expect(err).ToNot(HaveOccurred())
 
 			env.Config.EncryptionKey[0]++
@@ -93,9 +91,7 @@ var _ = Describe("Integration", func() {
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).To(BeZero())
 
-			gcsClient, err := client.NewSDK(env.ctx, *env.Config)
-			Expect(err).ToNot(HaveOccurred())
-			blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
+			blobstoreClient, err := client.New(env.ctx, env.Config)
 			Expect(err).ToNot(HaveOccurred())
 
 			env.Config.EncryptionKey = nil

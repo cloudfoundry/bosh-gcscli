@@ -106,9 +106,7 @@ var _ = Describe("Integration", func() {
 				const twoGB = 1024 * 1024 * 1024 * 2
 				limited := newrandReadSeeker(twoGB)
 
-				gcsClient, err := client.NewSDK(env.ctx, *env.Config)
-				Expect(err).ToNot(HaveOccurred())
-				blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
+				blobstoreClient, err := client.New(env.ctx, env.Config)
 				Expect(err).ToNot(HaveOccurred())
 
 				err = blobstoreClient.Put(&limited, env.GCSFileName)
@@ -123,9 +121,7 @@ var _ = Describe("Integration", func() {
 			func(config *config.GCSCli) {
 				env.AddConfig(config)
 
-				gcsClient, err := client.NewSDK(env.ctx, *env.Config)
-				Expect(err).ToNot(HaveOccurred())
-				blobstoreClient, err := client.New(env.ctx, gcsClient, env.Config)
+				blobstoreClient, err := client.New(env.ctx, env.Config)
 				Expect(err).ToNot(HaveOccurred())
 
 				err = blobstoreClient.Put(&badReadSeeker{}, env.GCSFileName)
