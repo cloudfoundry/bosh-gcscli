@@ -34,9 +34,9 @@ var ErrInvalidROWriteOperation = errors.New("the client operates in read only mo
 
 // GCSBlobstore encapsulates interaction with the GCS blobstore
 type GCSBlobstore struct {
-	gcs      *storage.Client
-	config   *config.GCSCli
-	readOnly bool
+	authenticatedGCS *storage.Client
+	publicGCS        *storage.Client
+	config           *config.GCSCli
 }
 
 // validateRemoteConfig determines if the configuration of the client matches
@@ -45,11 +45,11 @@ type GCSBlobstore struct {
 // If operating in read-only mode, no mutations can be performed
 // so the remote bucket location is always compatible.
 func (client *GCSBlobstore) validateRemoteConfig() error {
-	if client.readOnly {
+	if client.readOnly() {
 		return nil
 	}
 
-	bucket := client.gcs.Bucket(client.config.BucketName)
+	bucket := client.authenticatedGCS.Bucket(client.config.BucketName)
 	attrs, err := bucket.Attrs(context.Background())
 	if err != nil {
 		return err
@@ -57,9 +57,9 @@ func (client *GCSBlobstore) validateRemoteConfig() error {
 	return client.config.FitCompatibleLocation(attrs.Location)
 }
 
-// getObjectHandle returns a handle to an object at src.
-func (client GCSBlobstore) getObjectHandle(src string) *storage.ObjectHandle {
-	handle := client.gcs.Bucket(client.config.BucketName).Object(src)
+// getObjectHandle returns a handle to an object named src
+func (client *GCSBlobstore) getObjectHandle(gcs *storage.Client, src string) *storage.ObjectHandle {
+	handle := gcs.Bucket(client.config.BucketName).Object(src)
 	if client.config.EncryptionKey != nil {
 		handle = handle.Key(client.config.EncryptionKey)
 	}
@@ -75,23 +75,34 @@ func New(ctx context.Context, cfg *config.GCSCli) (*GCSBlobstore, error) {
 		return nil, errors.New("expected non-nill config object")
 	}
 
-	storageClient, readOnly, err := newStorageClient(ctx, cfg)
+	authenticatedGCS, publicGCS, err := newStorageClients(ctx, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("creating storage client: %v", err)
 	}
 
-	return &GCSBlobstore{gcs: storageClient, config: cfg, readOnly: readOnly}, nil
+	return &GCSBlobstore{authenticatedGCS: authenticatedGCS, publicGCS: publicGCS, config: cfg}, nil
 }
 
 // Get fetches a blob from the GCS blobstore.
 // Destination will be overwritten if it already exists.
 func (client *GCSBlobstore) Get(src string, dest io.Writer) error {
-	remoteReader, err := client.getObjectHandle(src).NewReader(context.Background())
+	reader, err := client.getReader(client.publicGCS, src)
+
+	// If the public client fails, try using it as an authenticated actor
+	if err != nil && client.authenticatedGCS != nil {
+		reader, err = client.getReader(client.authenticatedGCS, src)
+	}
+
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(dest, remoteReader)
+
+	_, err = io.Copy(dest, reader)
 	return err
+}
+
+func (client *GCSBlobstore) getReader(gcs *storage.Client, src string) (*storage.Reader, error) {
+	return client.getObjectHandle(gcs, src).NewReader(context.Background())
 }
 
 // Put uploads a blob to the GCS blobstore.
@@ -101,7 +112,7 @@ func (client *GCSBlobstore) Get(src string, dest io.Writer) error {
 const retryAttempts = 3
 
 func (client *GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
-	if client.readOnly {
+	if client.readOnly() {
 		return ErrInvalidROWriteOperation
 	}
 
@@ -133,7 +144,7 @@ func (client *GCSBlobstore) Put(src io.ReadSeeker, dest string) error {
 }
 
 func (client *GCSBlobstore) putOnce(src io.ReadSeeker, dest string) error {
-	remoteWriter := client.getObjectHandle(dest).NewWriter(context.Background())
+	remoteWriter := client.getObjectHandle(client.authenticatedGCS, dest).NewWriter(context.Background())
 	remoteWriter.ObjectAttrs.StorageClass = client.config.StorageClass
 
 	if _, err := io.Copy(remoteWriter, src); err != nil {
@@ -148,11 +159,11 @@ func (client *GCSBlobstore) putOnce(src io.ReadSeeker, dest string) error {
 //
 // If the object does not exist, Delete returns a nil error.
 func (client *GCSBlobstore) Delete(dest string) error {
-	if client.readOnly {
+	if client.readOnly() {
 		return ErrInvalidROWriteOperation
 	}
 
-	err := client.getObjectHandle(dest).Delete(context.Background())
+	err := client.getObjectHandle(client.authenticatedGCS, dest).Delete(context.Background())
 	if err == storage.ErrObjectNotExist {
 		return nil
 	}
@@ -160,16 +171,31 @@ func (client *GCSBlobstore) Delete(dest string) error {
 }
 
 // Exists checks if a blob exists in the GCS blobstore.
-func (client *GCSBlobstore) Exists(dest string) (bool, error) {
-	_, err := client.getObjectHandle(dest).Attrs(context.Background())
+func (client *GCSBlobstore) Exists(dest string) (exists bool, err error) {
+	if exists, err = client.exists(client.publicGCS, dest); err == nil {
+		return exists, nil
+	}
+
+	// If the public client fails, try using it as an authenticated actor
+	if client.authenticatedGCS != nil {
+		return client.exists(client.authenticatedGCS, dest)
+	}
+
+	return
+}
+
+func (client *GCSBlobstore) exists(gcs *storage.Client, dest string) (bool, error) {
+	_, err := client.getObjectHandle(gcs, dest).Attrs(context.Background())
 	if err == nil {
-		log.Printf("File '%s' exists in bucket '%s'\n",
-			dest, client.config.BucketName)
+		log.Printf("File '%s' exists in bucket '%s'\n", dest, client.config.BucketName)
 		return true, nil
 	} else if err == storage.ErrObjectNotExist {
-		log.Printf("File '%s' does not exist in bucket '%s'\n",
-			dest, client.config.BucketName)
+		log.Printf("File '%s' does not exist in bucket '%s'\n", dest, client.config.BucketName)
 		return false, nil
 	}
 	return false, err
+}
+
+func (client *GCSBlobstore) readOnly() bool {
+	return client.authenticatedGCS == nil
 }
