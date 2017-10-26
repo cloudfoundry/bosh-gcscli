@@ -20,12 +20,14 @@ import (
 	"context"
 	"errors"
 
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
 	"google.golang.org/api/option"
 
 	"net/http"
 
+	"cloud.google.com/go/compute/metadata"
 	"cloud.google.com/go/storage"
 	"github.com/cloudfoundry/bosh-gcscli/config"
 )
@@ -42,7 +44,7 @@ func newStorageClient(ctx context.Context, cfg *config.GCSCli) (*storage.Client,
 		// no-op
 	case config.DefaultCredentialsSource:
 		// attempt to load the application default credentials
-		if tokenSource, err := google.DefaultTokenSource(ctx, storage.ScopeFullControl); err == nil {
+		if tokenSource, err := getDefaultTokenSource(ctx); err == nil {
 			opt = option.WithTokenSource(tokenSource)
 			readOnly = false
 		}
@@ -58,4 +60,35 @@ func newStorageClient(ctx context.Context, cfg *config.GCSCli) (*storage.Client,
 	gcs, err := storage.NewClient(ctx, option.WithUserAgent(uaString), opt)
 
 	return gcs, readOnly, err
+}
+
+// If we're on GCE then google.DefaultTokenSource may return the default service account.
+// If that account doesn't have storage.ScopeFullControl then we do not want it.
+func useDefaultTokenSource() bool {
+	if !metadata.OnGCE() {
+		return true
+	}
+
+	scopes, err := metadata.Scopes("")
+	if err != nil {
+		// no default service account to use
+		return false
+	}
+
+	for _, scope := range scopes {
+		if scope == storage.ScopeFullControl {
+			// default service account has proper scope, it's fine to use it
+			return true
+		}
+	}
+
+	return false
+}
+
+func getDefaultTokenSource(ctx context.Context) (oauth2.TokenSource, error) {
+	if !useDefaultTokenSource() {
+		return nil, errors.New("refusing to use default token source")
+	}
+
+	return google.DefaultTokenSource(ctx, storage.ScopeFullControl)
 }
