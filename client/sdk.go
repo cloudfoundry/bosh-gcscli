@@ -32,30 +32,23 @@ import (
 
 const uaString = "bosh-gcscli"
 
-func newStorageClient(ctx context.Context, cfg *config.GCSCli) (*storage.Client, bool, error) {
-	// default to a read-only client
-	readOnly := true
-	opt := option.WithHTTPClient(http.DefaultClient)
+func newStorageClients(ctx context.Context, cfg *config.GCSCli) (*storage.Client, *storage.Client, error) {
+	publicClient, err := storage.NewClient(ctx, option.WithUserAgent(uaString), option.WithHTTPClient(http.DefaultClient))
+	var authenticatedClient *storage.Client
 
 	switch cfg.CredentialsSource {
 	case config.NoneCredentialsSource:
 		// no-op
 	case config.DefaultCredentialsSource:
-		// attempt to load the application default credentials
 		if tokenSource, err := google.DefaultTokenSource(ctx, storage.ScopeFullControl); err == nil {
-			opt = option.WithTokenSource(tokenSource)
-			readOnly = false
+			authenticatedClient, err = storage.NewClient(ctx, option.WithUserAgent(uaString), option.WithTokenSource(tokenSource))
 		}
 	case config.ServiceAccountFileCredentialsSource:
 		if token, err := google.JWTConfigFromJSON([]byte(cfg.ServiceAccountFile), storage.ScopeFullControl); err == nil {
-			opt = option.WithTokenSource(token.TokenSource(ctx))
-			readOnly = false
+			authenticatedClient, err = storage.NewClient(ctx, option.WithUserAgent(uaString), option.WithTokenSource(token.TokenSource(ctx)))
 		}
 	default:
-		return nil, false, errors.New("unknown credentials_source in configuration")
+		return nil, nil, errors.New("unknown credentials_source in configuration")
 	}
-
-	gcs, err := storage.NewClient(ctx, option.WithUserAgent(uaString), opt)
-
-	return gcs, readOnly, err
+	return authenticatedClient, publicClient, err
 }
