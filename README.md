@@ -66,7 +66,9 @@ The command line tool expects a JSON configuration file. Run `bosh-gcscli --help
    gcloud iam service-accounts keys create ${credentials_file} --iam-account ${service_account_email}
    gcloud project add-iam-policy-binding ${project_id} --member serviceAccount:${service_account_email} --role roles/storage.admin
   
+   export GOOGLE_SERVICE_ACCOUNT="$(cat ${credentials_file})"
    export GOOGLE_APPLICATION_CREDENTIALS="$(cat ${credentials_file})"
+   export LC_ALL=C # fix `tr` complaining about "illegal byte sequence" on OSX
    ```
 1. Run the unit and fast integration tests: `make test-fast-int`
 1. Clean up buckets: `make clean-gcs`
