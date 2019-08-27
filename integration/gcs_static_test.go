@@ -19,6 +19,9 @@ package integration
 import (
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+	"net/http"
+	"strings"
 )
 
 var _ = Describe("Integration", func() {
@@ -38,6 +41,25 @@ var _ = Describe("Integration", func() {
 
 		It("can perform blobstore lifecycle", func() {
 			AssertLifecycleWorks(gcsCLIPath, ctx)
+		})
+
+		It("can generate a signed url for a given object and action", func() {
+			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
+				"sign", ctx.GCSFileName, "PUT", "1h")
+
+			Expect(err).ToNot(HaveOccurred())
+			Expect(session.ExitCode()).To(Equal(0))
+			url := string(session.Out.Contents())
+			Expect(url).To(MatchRegexp("https://"))
+
+			body := strings.NewReader(`bar`)
+			req, err := http.NewRequest("PUT", url, body)
+			Expect(err).ToNot(HaveOccurred())
+
+			resp, err := http.DefaultClient.Do(req)
+			Expect(err).ToNot(HaveOccurred())
+			Expect(resp.StatusCode).To(Equal(200))
+			defer resp.Body.Close()
 		})
 	})
 })
