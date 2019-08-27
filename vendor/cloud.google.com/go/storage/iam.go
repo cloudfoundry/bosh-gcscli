@@ -1,4 +1,4 @@
-// Copyright 2017 Google Inc. All Rights Reserved.
+// Copyright 2017 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,9 +15,10 @@
 package storage
 
 import (
+	"context"
+
 	"cloud.google.com/go/iam"
 	"cloud.google.com/go/internal/trace"
-	"golang.org/x/net/context"
 	raw "google.golang.org/api/storage/v1"
 	iampb "google.golang.org/genproto/googleapis/iam/v1"
 )
@@ -36,7 +37,7 @@ type iamClient struct {
 	userProject string
 }
 
-func (c *iamClient) Get(ctx context.Context, resource string) (_ *iampb.Policy, err error) {
+func (c *iamClient) Get(ctx context.Context, resource string) (p *iampb.Policy, err error) {
 	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.IAM.Get")
 	defer func() { trace.EndSpan(ctx, err) }()
 
@@ -72,7 +73,7 @@ func (c *iamClient) Set(ctx context.Context, resource string, p *iampb.Policy) (
 	})
 }
 
-func (c *iamClient) Test(ctx context.Context, resource string, perms []string) (_ []string, err error) {
+func (c *iamClient) Test(ctx context.Context, resource string, perms []string) (permissions []string, err error) {
 	ctx = trace.StartSpan(ctx, "cloud.google.com/go/storage.IAM.Test")
 	defer func() { trace.EndSpan(ctx, err) }()
 
