@@ -17,8 +17,11 @@ package view
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
+	"go.opencensus.io/metric/metricdata"
+	"go.opencensus.io/metric/metricproducer"
 	"go.opencensus.io/stats"
 	"go.opencensus.io/stats/internal"
 	"go.opencensus.io/tag"
@@ -43,14 +46,15 @@ type worker struct {
 	timer      *time.Ticker
 	c          chan command
 	quit, done chan bool
+	mu         sync.RWMutex
 }
 
 var defaultWorker *worker
 
 var defaultReportingDuration = 10 * time.Second
 
-// Find returns a subscribed view associated with this name.
-// If no subscribed view is found, nil is returned.
+// Find returns a registered view associated with this name.
+// If no registered view is found, nil is returned.
 func Find(name string) (v *View) {
 	req := &getViewByNameReq{
 		name: name,
@@ -61,30 +65,10 @@ func Find(name string) (v *View) {
 	return resp.v
 }
 
-// Deprecated: Registering is a no-op. Use the Subscribe function.
-func Register(_ *View) error {
-	return nil
-}
-
-// Deprecated: Unregistering is a no-op, see: Unsubscribe.
-func Unregister(_ *View) error {
-	return nil
-}
-
-// Deprecated: Use the Subscribe function.
-func (v *View) Subscribe() error {
-	return Subscribe(v)
-}
-
-// Subscribe begins collecting data for the given views.
-// Once a view is subscribed, it reports data to the registered exporters.
-func Subscribe(views ...*View) error {
-	for _, v := range views {
-		if err := v.canonicalize(); err != nil {
-			return err
-		}
-	}
-	req := &subscribeToViewReq{
+// Register begins collecting data for the given views.
+// Once a view is registered, it reports data to the registered exporters.
+func Register(views ...*View) error {
+	req := &registerViewReq{
 		views: views,
 		err:   make(chan error),
 	}
@@ -92,16 +76,16 @@ func Subscribe(views ...*View) error {
 	return <-req.err
 }
 
-// Unsubscribe the given views. Data will not longer be exported for these views
-// after Unsubscribe returns.
-// It is not necessary to unsubscribe from views you expect to collect for the
+// Unregister the given views. Data will not longer be exported for these views
+// after Unregister returns.
+// It is not necessary to unregister from views you expect to collect for the
 // duration of your program execution.
-func Unsubscribe(views ...*View) {
+func Unregister(views ...*View) {
 	names := make([]string, len(views))
 	for i := range views {
 		names[i] = views[i].Name
 	}
-	req := &unsubscribeFromViewReq{
+	req := &unregisterFromViewReq{
 		views: names,
 		done:  make(chan struct{}),
 	}
@@ -109,15 +93,8 @@ func Unsubscribe(views ...*View) {
 	<-req.done
 }
 
-// Deprecated: Use the Unsubscribe function instead.
-func (v *View) Unsubscribe() error {
-	if v == nil {
-		return nil
-	}
-	Unsubscribe(v)
-	return nil
-}
-
+// RetrieveData gets a snapshot of the data collected for the the view registered
+// with the given name. It is intended for testing only.
 func RetrieveData(viewName string) ([]*Row, error) {
 	req := &retrieveDataReq{
 		now: time.Now(),
@@ -129,17 +106,23 @@ func RetrieveData(viewName string) ([]*Row, error) {
 	return resp.rows, resp.err
 }
 
-func record(tags *tag.Map, ms interface{}) {
+func record(tags *tag.Map, ms interface{}, attachments map[string]interface{}) {
 	req := &recordReq{
-		tm: tags,
-		ms: ms.([]stats.Measurement),
+		tm:          tags,
+		ms:          ms.([]stats.Measurement),
+		attachments: attachments,
+		t:           time.Now(),
 	}
 	defaultWorker.c <- req
 }
 
 // SetReportingPeriod sets the interval between reporting aggregated views in
-// the program. If duration is less than or
-// equal to zero, it enables the default behavior.
+// the program. If duration is less than or equal to zero, it enables the
+// default behavior.
+//
+// Note: each exporter makes different promises about what the lowest supported
+// duration is. For example, the Stackdriver exporter recommends a value no
+// lower than 1 minute. Consult each exporter per your needs.
 func SetReportingPeriod(d time.Duration) {
 	// TODO(acetechnologist): ensure that the duration d is more than a certain
 	// value. e.g. 1s
@@ -164,12 +147,13 @@ func newWorker() *worker {
 }
 
 func (w *worker) start() {
+	prodMgr := metricproducer.GlobalManager()
+	prodMgr.AddProducer(w)
+
 	for {
 		select {
 		case cmd := <-w.c:
-			if cmd != nil {
-				cmd.handleCommand(w)
-			}
+			cmd.handleCommand(w)
 		case <-w.timer.C:
 			w.reportUsage(time.Now())
 		case <-w.quit:
@@ -182,6 +166,9 @@ func (w *worker) start() {
 }
 
 func (w *worker) stop() {
+	prodMgr := metricproducer.GlobalManager()
+	prodMgr.DeleteProducer(w)
+
 	w.quit <- true
 	<-w.done
 }
@@ -199,13 +186,15 @@ func (w *worker) getMeasureRef(name string) *measureRef {
 }
 
 func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	vi, err := newViewInternal(v)
 	if err != nil {
 		return nil, err
 	}
 	if x, ok := w.views[vi.view.Name]; ok {
 		if !x.view.same(vi.view) {
-			return nil, fmt.Errorf("cannot subscribe view %q; a different view with the same name is already subscribed", v.Name)
+			return nil, fmt.Errorf("cannot register view %q; a different view with the same name is already registered", v.Name)
 		}
 
 		// the view is already registered so there is nothing to do and the
@@ -218,40 +207,75 @@ func (w *worker) tryRegisterView(v *View) (*viewInternal, error) {
 	return vi, nil
 }
 
+func (w *worker) unregisterView(viewName string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	delete(w.views, viewName)
+}
+
+func (w *worker) reportView(v *viewInternal, now time.Time) {
+	if !v.isSubscribed() {
+		return
+	}
+	rows := v.collectedRows()
+	_, ok := w.startTimes[v]
+	if !ok {
+		w.startTimes[v] = now
+	}
+	viewData := &Data{
+		View:  v.view,
+		Start: w.startTimes[v],
+		End:   time.Now(),
+		Rows:  rows,
+	}
+	exportersMu.Lock()
+	for e := range exporters {
+		e.ExportView(viewData)
+	}
+	exportersMu.Unlock()
+}
+
 func (w *worker) reportUsage(now time.Time) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	for _, v := range w.views {
-		if !v.isSubscribed() {
-			continue
-		}
-		rows := v.collectedRows()
-		_, ok := w.startTimes[v]
-		if !ok {
-			w.startTimes[v] = now
-		}
-		// Make sure collector is never going
-		// to mutate the exported data.
-		rows = deepCopyRowData(rows)
-		viewData := &Data{
-			View:  v.view,
-			Start: w.startTimes[v],
-			End:   time.Now(),
-			Rows:  rows,
-		}
-		exportersMu.Lock()
-		for e := range exporters {
-			e.ExportView(viewData)
-		}
-		exportersMu.Unlock()
+		w.reportView(v, now)
 	}
 }
 
-func deepCopyRowData(rows []*Row) []*Row {
-	newRows := make([]*Row, 0, len(rows))
-	for _, r := range rows {
-		newRows = append(newRows, &Row{
-			Data: r.Data.clone(),
-			Tags: r.Tags,
-		})
+func (w *worker) toMetric(v *viewInternal, now time.Time) *metricdata.Metric {
+	if !v.isSubscribed() {
+		return nil
 	}
-	return newRows
+
+	_, ok := w.startTimes[v]
+	if !ok {
+		w.startTimes[v] = now
+	}
+
+	var startTime time.Time
+	if v.metricDescriptor.Type == metricdata.TypeGaugeInt64 ||
+		v.metricDescriptor.Type == metricdata.TypeGaugeFloat64 {
+		startTime = time.Time{}
+	} else {
+		startTime = w.startTimes[v]
+	}
+
+	return viewToMetric(v, now, startTime)
+}
+
+// Read reads all view data and returns them as metrics.
+// It is typically invoked by metric reader to export stats in metric format.
+func (w *worker) Read() []*metricdata.Metric {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	now := time.Now()
+	metrics := make([]*metricdata.Metric, 0, len(w.views))
+	for _, v := range w.views {
+		metric := w.toMetric(v, now)
+		if metric != nil {
+			metrics = append(metrics, metric)
+		}
+	}
+	return metrics
 }
