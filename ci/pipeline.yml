@@ -13,6 +13,8 @@ jobs:
     - trigger: true
       get: gcscli-src
       resource: bosh-gcscli-src-in-master
+      passed:
+      - promote-develop
 
     - task: unit-tests
       file: gcscli-src/ci/tasks/run-unit.yml
@@ -20,8 +22,6 @@ jobs:
   - name: run-fast-int-develop
     plan:
     - trigger: true
-      passed:
-        - run-unit-develop
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
 
@@ -37,6 +37,8 @@ jobs:
       passed: [run-unit-master]
       get: gcscli-src
       resource: bosh-gcscli-src-in-master
+      passed:
+      - promote-develop
 
     - task: fast-integration-tests
       file: gcscli-src/ci/tasks/run-fast-int.yml
@@ -47,8 +49,6 @@ jobs:
   - name: run-int-develop
     plan:
     - trigger: true
-      passed:
-        - run-fast-int-develop
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
 
@@ -64,6 +64,8 @@ jobs:
       passed: [run-fast-int-master]
       get: gcscli-src
       resource: bosh-gcscli-src-in-master
+      passed:
+      - promote-develop
 
     - task: full-integration-tests
       file: gcscli-src/ci/tasks/run-int.yml
@@ -78,9 +80,9 @@ jobs:
         resource: bosh-gcscli-src-in-master
         trigger: true
         passed:
-          - run-unit-master
-          - run-fast-int-master
-          - run-int-master
+        - run-unit-master
+        - run-fast-int-master
+        - run-int-master
       - put: version-semver
         resource: version-semver-master
         params:
@@ -108,6 +110,21 @@ jobs:
         params:
           file: out-windows/bosh-gcscli-*-windows-amd64.exe
 
+  - name: promote-develop
+    plan:
+    - get: gcscli-src
+      resource: bosh-gcscli-src-in-develop
+      trigger: true
+      passed:
+      - run-unit-develop
+      - run-fast-int-develop
+      - run-int-develop
+    - put: gcs-cli
+      resource: bosh-gcscli-src-in-master
+      params:
+        repository: gcscli-src
+        rebase: true
+
 resources:
   - name: bosh-gcscli-src-in-develop
     type: git
@@ -118,8 +135,9 @@ resources:
   - name: bosh-gcscli-src-in-master
     type: git
     source:
-      uri: https://github.com/cloudfoundry/bosh-gcscli.git
+      uri: git@github.com:cloudfoundry/bosh-gcscli.git
       branch: master
+      private_key: ((gcscli_deploy_key))
 
   - name: version-semver-master
     type: semver
