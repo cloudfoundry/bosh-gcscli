@@ -1,89 +1,136 @@
 jobs:
-  - name: run-unit
+  - name: run-unit-develop
     plan:
-      - aggregate:
-        - {trigger: true, get: gcscli-src, resource: bosh-gcscli-src-in}
+    - trigger: true
+      get: gcscli-src
+      resource: bosh-gcscli-src-in-develop
 
-      - task: unit-tests
-        file: gcscli-src/ci/tasks/run-unit.yml
+    - task: unit-tests
+      file: gcscli-src/ci/tasks/run-unit.yml
 
-  - name: run-fast-int
+  - name: run-unit-master
     plan:
-      - aggregate:
-        - {
-            trigger: true, passed: [run-unit],
-            get: gcscli-src, resource: bosh-gcscli-src-in
-          }
+    - trigger: true
+      get: gcscli-src
+      resource: bosh-gcscli-src-in-master
 
-      - task: fast-integration-tests
-        file: gcscli-src/ci/tasks/run-fast-int.yml
+    - task: unit-tests
+      file: gcscli-src/ci/tasks/run-unit.yml
+
+  - name: run-fast-int-develop
+    plan:
+    - trigger: true
+      passed:
+        - run-unit-develop
+      get: gcscli-src
+      resource: bosh-gcscli-src-in-develop
+
+    - task: fast-integration-tests
+      file: gcscli-src/ci/tasks/run-fast-int.yml
+      params:
+        google_project: {{google_project}}
+        google_json_key_data: {{google_json_key_data}}
+
+  - name: run-fast-int-master
+    plan:
+    - trigger: true
+      passed: [run-unit-master]
+      get: gcscli-src
+      resource: bosh-gcscli-src-in-master
+
+    - task: fast-integration-tests
+      file: gcscli-src/ci/tasks/run-fast-int.yml
+      params:
+        google_project: {{google_project}}
+        google_json_key_data: {{google_json_key_data}}
+
+  - name: run-int-develop
+    plan:
+    - trigger: true
+      passed:
+        - run-fast-int-develop
+      get: gcscli-src
+      resource: bosh-gcscli-src-in-develop
+
+    - task: full-integration-tests
+      file: gcscli-src/ci/tasks/run-int.yml
+      params:
+        google_project: {{google_project}}
+        google_json_key_data: {{google_json_key_data}}
+
+  - name: run-int-master
+    plan:
+    - trigger: true
+      passed: [run-fast-int-master]
+      get: gcscli-src
+      resource: bosh-gcscli-src-in-master
+
+    - task: full-integration-tests
+      file: gcscli-src/ci/tasks/run-int.yml
+      params:
+        google_project: {{google_project}}
+        google_json_key_data: {{google_json_key_data}}
+
+  - name: promote-master
+    plan:
+    - in_parallel:
+      - get: gcscli-src
+        resource: bosh-gcscli-src-in-master
+        trigger: true
+        passed:
+          - run-unit-master
+          - run-fast-int-master
+          - run-int-master
+      - put: version-semver
+        resource: version-semver-master
         params:
-          google_project: {{google_project}}
-          google_json_key_data: {{google_json_key_data}}
-
-  - name: run-int
-    plan:
-      - aggregate:
-        - {
-            trigger: true, passed: [run-fast-int],
-            get: gcscli-src, resource: bosh-gcscli-src-in
-          }
-
-      - task: full-integration-tests
-        file: gcscli-src/ci/tasks/run-int.yml
+          bump: patch
+    - in_parallel:
+      - task: build-linux
+        file: gcscli-src/ci/tasks/build.yml
+        output_mapping:
+          out: out-linux
         params:
-          google_project: {{google_project}}
-          google_json_key_data: {{google_json_key_data}}
-
-  - name: promote
-    plan:
-      - aggregate:
-        - get: gcscli-src
-          resource: bosh-gcscli-src-in
-          trigger: true
-          passed: [
-            run-unit,
-            run-fast-int,
-            run-int
-          ]
-        - put: version-semver
-          params:
-            bump: patch
-      - aggregate:
-        - task: build-linux
-          file: gcscli-src/ci/tasks/build.yml
-          output_mapping: { out: out-linux }
-          params:
-            GOOS: linux
-        - task: build-windows
-          file: gcscli-src/ci/tasks/build.yml
-          output_mapping: { out: out-windows }
-          params:
-            GOOS: windows
-      - aggregate:
-        - put: release-bucket-linux
-          params: {file: out-linux/bosh-gcscli-*-linux-amd64}
-        - put: release-bucket-windows
-          params: {file: out-windows/bosh-gcscli-*-windows-amd64.exe}
+          GOOS: linux
+      - task: build-windows
+        file: gcscli-src/ci/tasks/build.yml
+        output_mapping:
+          out: out-windows
+        params:
+          GOOS: windows
+    - in_parallel:
+      - put: release-bucket-linux
+        resource: release-bucket-linux-master
+        params:
+          file: out-linux/bosh-gcscli-*-linux-amd64
+      - put: release-bucket-windows
+        resource: release-bucket-windows-master
+        params:
+          file: out-windows/bosh-gcscli-*-windows-amd64.exe
 
 resources:
-  - name: bosh-gcscli-src-in
+  - name: bosh-gcscli-src-in-develop
+    type: git
+    source:
+      uri: https://github.com/cloudfoundry/bosh-gcscli.git
+      branch: develop
+
+  - name: bosh-gcscli-src-in-master
     type: git
     source:
       uri: https://github.com/cloudfoundry/bosh-gcscli.git
       branch: master
 
-  - name: version-semver
+  - name: version-semver-master
     type: semver
     source:
       initial_version: 0.0.1
       key: current-version
-      endpoint: storage.googleapis.com
       bucket: {{gcscli_release_bucket}}
       access_key_id: {{gcscli_release_bucket_access_key}}
       secret_access_key: {{gcscli_release_bucket_secret_key}}
 
-  - name: release-bucket-linux
+  - name: release-bucket-linux-master
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-linux-amd64
@@ -91,7 +138,7 @@ resources:
       access_key_id: {{gcscli_release_bucket_access_key}}
       secret_access_key: {{gcscli_release_bucket_secret_key}}
 
-  - name: release-bucket-windows
+  - name: release-bucket-windows-master
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-windows-amd64\.exe
