@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-SHELL = bash
+
 default: test-int
 
 # build the binary
@@ -20,7 +20,7 @@ build:
 
 # Fetch base dependencies as well as testing packages
 get-deps:
-	go get golang.org/x/lint/golint
+	go get github.com/golang/lint/golint
 	# Ginkgo and omega test tools
 	go get github.com/onsi/ginkgo/ginkgo
 	go get github.com/onsi/gomega
@@ -39,7 +39,7 @@ lint:
 
 # Vet code
 vet:
-	go vet $$(ls -d */ | grep -v vendor | grep -v ci | xargs -n1 -I{} echo ./{})
+	go tool vet $$(ls -d */ | grep -v vendor)
 
 # Generate a $StorageClass.lock which contains our bucket name
 # used for testing. Buckets must be unique among all in GCS,
@@ -47,7 +47,7 @@ vet:
 .PHONY: FORCE
 regional.lock:
 	@test -s "regional.lock" || \
-	{ echo -n bosh-gcs; \
+	{ echo -n "bosh-gcs"; \
 	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > regional.lock
 
 # Create a bucket using the name located in $StorageClass.lock with
@@ -60,7 +60,7 @@ regional-bucket: regional.lock
 .PHONY: FORCE
 multiregional.lock:
 	@test -s "multiregional.lock" || \
-	{ echo -n bosh-gcs; \
+	{ echo -n "bosh-gcs"; \
 	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > multiregional.lock
 
 multiregional-bucket: multiregional.lock
@@ -71,7 +71,7 @@ multiregional-bucket: multiregional.lock
 .PHONY: FORCE
 public.lock:
 	@test -s "public.lock" || \
-	{ echo -n bosh-gcs; \
+	{ echo -n "bosh-gcs"; \
 	cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 40 | head -n 1 ;} > public.lock
 
 

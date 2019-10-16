@@ -1,5 +1,3 @@
+*.lock
 bosh-gcscli
 config.json
-regional.lock
-multiregional.lock
-public.lock

@@ -37,14 +37,6 @@ bosh-gcscli -c config.json delete <remote-blob>
 bosh-gcscli -c config.json exists <remote-blob>```
 ```
 
-### Generate a signed url for an object
-```bash
-bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>```
-```
-Where:
- - `<http action>` is GET, PUT, or DELETE
- - `<expiry>` is a duration string less than 7 days (e.g. "6h")
-
 ## Configuration
 The command line tool expects a JSON configuration file. Run `bosh-gcscli --help` for details.
 
@@ -74,9 +66,7 @@ The command line tool expects a JSON configuration file. Run `bosh-gcscli --help
    gcloud iam service-accounts keys create ${credentials_file} --iam-account ${service_account_email}
    gcloud project add-iam-policy-binding ${project_id} --member serviceAccount:${service_account_email} --role roles/storage.admin
   
-   export GOOGLE_SERVICE_ACCOUNT="$(cat ${credentials_file})"
    export GOOGLE_APPLICATION_CREDENTIALS="$(cat ${credentials_file})"
-   export LC_ALL=C # fix `tr` complaining about "illegal byte sequence" on OSX
    ```
 1. Run the unit and fast integration tests: `make test-fast-int`
 1. Clean up buckets: `make clean-gcs`

@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
 	"github.com/cloudfoundry/bosh-gcscli/config"
@@ -46,13 +45,7 @@ bosh-gcscli -c config.json get <remote-blob> <path/to/file>
 bosh-gcscli -c config.json delete <remote-blob>
 
 # Checks if blob exists in the GCS blobstore.
-bosh-gcscli -c config.json exists <remote-blob>
-
-# Generate a signed url for an object
-bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
-Where:
-- <http action> is GET, PUT, or DELETE
-- <expiry> is a duration string less than 7 days (e.g. "6h")`
+bosh-gcscli -c config.json exists <remote-blob>`
 
 var (
 	showVer    = flag.Bool("v", false, "Print CLI version")
@@ -172,23 +165,6 @@ func main() {
 		// We are using `3` since `1` and `2` have special meanings
 		if err == nil && !exists {
 			os.Exit(3)
-		}
-	case "sign":
-		if len(nonFlagArgs) != 4 {
-			log.Fatalf("sign method expected 3 arguments got %d\n", len(nonFlagArgs))
-		}
-
-		id, action, expiry := nonFlagArgs[1], nonFlagArgs[2], nonFlagArgs[3]
-
-		var expiryDuration time.Duration
-		expiryDuration, err = time.ParseDuration(expiry)
-		if err != nil {
-			log.Fatalf("Invalid expiry duration: %v", err)
-		}
-		url := ""
-		url, err = blobstoreClient.Sign(id, action, expiryDuration)
-		if err == nil {
-			os.Stdout.WriteString(url)
 		}
 
 	default:
