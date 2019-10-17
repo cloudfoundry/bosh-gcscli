@@ -109,6 +109,12 @@ jobs:
         resource: release-bucket-windows-master
         params:
           file: out-windows/bosh-gcscli-*-windows-amd64.exe
+    - params:
+        repository: gcscli-src
+        tag: version-semver/number
+        tag_prefix: v
+      put: gcscli-src
+      resource: bosh-gcscli-src-in-master
 
   - name: promote-develop
     plan:
