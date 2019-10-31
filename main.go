@@ -20,7 +20,9 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
@@ -180,6 +182,12 @@ func main() {
 
 		id, action, expiry := nonFlagArgs[1], nonFlagArgs[2], nonFlagArgs[3]
 
+		action = strings.ToUpper(action)
+		err = validateAction(action)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		var expiryDuration time.Duration
 		expiryDuration, err = time.ParseDuration(expiry)
 		if err != nil {
@@ -198,4 +206,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("performing operation %s: %s\n", cmd, err)
 	}
+}
+
+func validateAction(action string) error {
+	if action != http.MethodGet && action != http.MethodPut && action != http.MethodDelete {
+		return fmt.Errorf("invalid signing action: %s must be GET, PUT, or DELETE", action)
+	}
+	return nil
 }

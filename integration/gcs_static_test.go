@@ -17,11 +17,12 @@
 package integration
 
 import (
+	"net/http"
+	"strings"
+
 	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net/http"
-	"strings"
 )
 
 var _ = Describe("Integration", func() {
@@ -43,9 +44,14 @@ var _ = Describe("Integration", func() {
 			AssertLifecycleWorks(gcsCLIPath, ctx)
 		})
 
+		It("validates the action is valid", func() {
+			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "not-valid", "1h")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(session.ExitCode()).ToNot(Equal(0))
+		})
+
 		It("can generate a signed url for a given object and action", func() {
-			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath,
-				"sign", ctx.GCSFileName, "PUT", "1h")
+			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "put", "1h")
 
 			Expect(err).ToNot(HaveOccurred())
 			Expect(session.ExitCode()).To(Equal(0))
