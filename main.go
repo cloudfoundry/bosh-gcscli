@@ -51,10 +51,15 @@ bosh-gcscli -c config.json delete <remote-blob>
 bosh-gcscli -c config.json exists <remote-blob>
 
 # Generate a signed url for an object
-bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
-Where:
-- <http action> is GET, PUT, or DELETE
-- <expiry> is a duration string less than 7 days (e.g. "6h")`
+# Where:
+# - <http action> is GET, PUT, or DELETE
+# - <expiry> is a duration string less than 7 days (e.g. "6h")
+# - <encrypt> is optional the word 'encrypt'. Users of the signed url are required to provide the correct headers
+              eg. -H "x-goog-encryption-key: <customer-supplied encryption key>" -H "x-goog-encryption-sha256: <hash>" -H "x-goog-encryption-algorithm: AES256"
+# eg bosh-gcscli -c config.json sign blobid PUT 24h encrypt
+# eg bosh-gcscli -c config.json sign blobid PUT 24h
+bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry> [encrypt]
+`
 
 var (
 	showVer    = flag.Bool("v", false, "Print CLI version")
@@ -129,7 +134,7 @@ func main() {
 	switch cmd {
 	case "put":
 		if len(nonFlagArgs) != 3 {
-			log.Fatalf("put method expected 3 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("put method expected 2 arguments got %d\n", len(nonFlagArgs))
 		}
 		src, dst := nonFlagArgs[1], nonFlagArgs[2]
 
@@ -144,7 +149,7 @@ func main() {
 		fmt.Println(err)
 	case "get":
 		if len(nonFlagArgs) != 3 {
-			log.Fatalf("get method expected 3 arguments got %d\n", len(nonFlagArgs))
+			log.Fatalf("get method expected 2 arguments got %d\n", len(nonFlagArgs))
 		}
 		src, dst := nonFlagArgs[1], nonFlagArgs[2]
 
@@ -176,8 +181,8 @@ func main() {
 			os.Exit(3)
 		}
 	case "sign":
-		if len(nonFlagArgs) != 4 {
-			log.Fatalf("sign method expected 3 arguments got %d\n", len(nonFlagArgs))
+		if len(nonFlagArgs) < 4 {
+			log.Fatalf("sign method expected at least 3 arguments got %d\n", len(nonFlagArgs))
 		}
 
 		id, action, expiry := nonFlagArgs[1], nonFlagArgs[2], nonFlagArgs[3]
@@ -188,13 +193,18 @@ func main() {
 			log.Fatal(err)
 		}
 
+		willEncrypt := false
+		if len(nonFlagArgs) > 4 {
+			willEncrypt = nonFlagArgs[4] == "encrypt"
+		}
+
 		var expiryDuration time.Duration
 		expiryDuration, err = time.ParseDuration(expiry)
 		if err != nil {
 			log.Fatalf("Invalid expiry duration: %v", err)
 		}
 		url := ""
-		url, err = blobstoreClient.Sign(id, action, expiryDuration)
+		url, err = blobstoreClient.Sign(id, action, expiryDuration, willEncrypt)
 		if err == nil {
 			os.Stdout.WriteString(url)
 		}
