@@ -203,7 +203,7 @@ func (client *GCSBlobstore) readOnly() bool {
 	return client.authenticatedGCS == nil
 }
 
-func (client *GCSBlobstore) Sign(id string, action string, expiry time.Duration, willEncrypt bool) (string, error) {
+func (client *GCSBlobstore) Sign(id string, action string, expiry time.Duration) (string, error) {
 	token, err := google.JWTConfigFromJSON([]byte(client.config.ServiceAccountFile), storage.ScopeFullControl)
 	if err != nil {
 		return "", err
@@ -215,14 +215,5 @@ func (client *GCSBlobstore) Sign(id string, action string, expiry time.Duration,
 		GoogleAccessID: token.Email,
 		Scheme:         storage.SigningSchemeV4,
 	}
-
-	// GET/PUT to the resultant signed url will include
-	// 'x-goog-encryption-key' and 'x-goog-encryption-key-hash' headers
-	if willEncrypt {
-		options.Headers = []string{
-			"x-goog-encryption-algorithm:AES256",
-		}
-	}
-
 	return storage.SignedURL(client.config.BucketName, id, &options)
 }

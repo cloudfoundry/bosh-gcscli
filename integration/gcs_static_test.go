@@ -67,43 +67,5 @@ var _ = Describe("Integration", func() {
 			Expect(resp.StatusCode).To(Equal(200))
 			defer resp.Body.Close()
 		})
-
-		It("can generate a signed url for encrypting later", func() {
-			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "PUT", "1h", "encrypt")
-			Expect(err).ToNot(HaveOccurred())
-			signedPutUrl := string(session.Out.Contents())
-
-			session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "GET", "1h", "encrypt")
-			Expect(err).ToNot(HaveOccurred())
-			signedGetUrl := string(session.Out.Contents())
-
-			stuff := strings.NewReader(`stuff`)
-			putReq, _ := http.NewRequest("PUT", signedPutUrl, stuff)
-			getReq, _ := http.NewRequest("GET", signedGetUrl, nil)
-
-			// openssl rand 32 | base64
-			key := "PG+tLm6vjBZXpU6S5Oiv/rpkA4KLioQRTXU3AfVzyHc="
-			// echo -n key | base64 -D | shasum -a 256 | cut -f1 -d' ' | tr -d '\n' | xxd -r -p | base64
-			hash := "bQOB9Mp048LRjpIoKm2njgQgiC3FRO2gn/+x6Vlfa4E="
-
-			headers := map[string][]string{
-				"x-goog-encryption-algorithm":  []string{"AES256"},
-				"x-goog-encryption-key":        []string{key},
-				"x-goog-encryption-key-sha256": []string{hash},
-			}
-
-			putReq.Header = headers
-			getReq.Header = headers
-
-			resp, err := http.DefaultClient.Do(putReq)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(200))
-			resp.Body.Close()
-
-			resp, err = http.DefaultClient.Do(getReq)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(200))
-			resp.Body.Close()
-		})
 	})
 })
