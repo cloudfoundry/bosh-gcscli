@@ -17,6 +17,7 @@
 package integration
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strings"
 
@@ -68,42 +69,59 @@ var _ = Describe("Integration", func() {
 			defer resp.Body.Close()
 		})
 
-		It("can generate a signed url for encrypting later", func() {
-			session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "PUT", "1h", "encrypt")
-			Expect(err).ToNot(HaveOccurred())
-			signedPutUrl := string(session.Out.Contents())
+		Context("encryption key is set", func() {
+			var key string
 
-			session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "GET", "1h", "encrypt")
-			Expect(err).ToNot(HaveOccurred())
-			signedGetUrl := string(session.Out.Contents())
+			BeforeEach(func() {
+				// even though the config file holds a base64 encodeded key,
+				// config at this point needs it to be decoded
+				// openssl rand 32 | base64
+				key = "PG+tLm6vjBZXpU6S5Oiv/rpkA4KLioQRTXU3AfVzyHc="
+				data, err := base64.StdEncoding.DecodeString(key)
+				Expect(err).NotTo(HaveOccurred())
 
-			stuff := strings.NewReader(`stuff`)
-			putReq, _ := http.NewRequest("PUT", signedPutUrl, stuff)
-			getReq, _ := http.NewRequest("GET", signedGetUrl, nil)
+				newcfg := ctx.Config
+				newcfg.EncryptionKey = data
+				ctx.AddConfig(newcfg)
+			})
 
-			// openssl rand 32 | base64
-			key := "PG+tLm6vjBZXpU6S5Oiv/rpkA4KLioQRTXU3AfVzyHc="
-			// echo -n key | base64 -D | shasum -a 256 | cut -f1 -d' ' | tr -d '\n' | xxd -r -p | base64
-			hash := "bQOB9Mp048LRjpIoKm2njgQgiC3FRO2gn/+x6Vlfa4E="
+			It("can generate a signed url for encrypting later", func() {
+				// echo -n key | base64 -D | shasum -a 256 | cut -f1 -d' ' | tr -d '\n' | xxd -r -p | base64
+				hash := "bQOB9Mp048LRjpIoKm2njgQgiC3FRO2gn/+x6Vlfa4E="
 
-			headers := map[string][]string{
-				"x-goog-encryption-algorithm":  []string{"AES256"},
-				"x-goog-encryption-key":        []string{key},
-				"x-goog-encryption-key-sha256": []string{hash},
-			}
+				session, err := RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "PUT", "1h")
+				Expect(err).ToNot(HaveOccurred())
+				signedPutUrl := string(session.Out.Contents())
+				Expect(signedPutUrl).ToNot(BeNil())
 
-			putReq.Header = headers
-			getReq.Header = headers
+				session, err = RunGCSCLI(gcsCLIPath, ctx.ConfigPath, "sign", ctx.GCSFileName, "GET", "1h")
+				Expect(err).ToNot(HaveOccurred())
+				signedGetUrl := string(session.Out.Contents())
+				Expect(signedGetUrl).ToNot(BeNil())
 
-			resp, err := http.DefaultClient.Do(putReq)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(200))
-			resp.Body.Close()
+				stuff := strings.NewReader(`stuff`)
+				putReq, _ := http.NewRequest("PUT", signedPutUrl, stuff)
+				getReq, _ := http.NewRequest("GET", signedGetUrl, nil)
 
-			resp, err = http.DefaultClient.Do(getReq)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(resp.StatusCode).To(Equal(200))
-			resp.Body.Close()
+				headers := map[string][]string{
+					"x-goog-encryption-algorithm":  []string{"AES256"},
+					"x-goog-encryption-key":        []string{key},
+					"x-goog-encryption-key-sha256": []string{hash},
+				}
+
+				putReq.Header = headers
+				getReq.Header = headers
+
+				resp, err := http.DefaultClient.Do(putReq)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(200))
+				resp.Body.Close()
+
+				resp, err = http.DefaultClient.Do(getReq)
+				Expect(err).ToNot(HaveOccurred())
+				Expect(resp.StatusCode).To(Equal(200))
+				resp.Body.Close()
+			})
 		})
 	})
 })

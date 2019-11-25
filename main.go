@@ -51,14 +51,13 @@ bosh-gcscli -c config.json delete <remote-blob>
 bosh-gcscli -c config.json exists <remote-blob>
 
 # Generate a signed url for an object
+# if an encryption key is present in config, the appropriate header will be sent
+# users of the signed url must include encryption headers in request
 # Where:
 # - <http action> is GET, PUT, or DELETE
 # - <expiry> is a duration string less than 7 days (e.g. "6h")
-# - <encrypt> is optional the word 'encrypt'. Users of the signed url are required to provide the correct headers
-              eg. -H "x-goog-encryption-key: <customer-supplied encryption key>" -H "x-goog-encryption-sha256: <hash>" -H "x-goog-encryption-algorithm: AES256"
-# eg bosh-gcscli -c config.json sign blobid PUT 24h encrypt
 # eg bosh-gcscli -c config.json sign blobid PUT 24h
-bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry> [encrypt]
+bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
 `
 
 var (
@@ -181,8 +180,8 @@ func main() {
 			os.Exit(3)
 		}
 	case "sign":
-		if len(nonFlagArgs) < 4 {
-			log.Fatalf("sign method expected at least 3 arguments got %d\n", len(nonFlagArgs))
+		if len(nonFlagArgs) != 4 {
+			log.Fatalf("sign method expected 3 arguments got %d\n", len(nonFlagArgs))
 		}
 
 		id, action, expiry := nonFlagArgs[1], nonFlagArgs[2], nonFlagArgs[3]
@@ -193,18 +192,13 @@ func main() {
 			log.Fatal(err)
 		}
 
-		willEncrypt := false
-		if len(nonFlagArgs) > 4 {
-			willEncrypt = nonFlagArgs[4] == "encrypt"
-		}
-
 		var expiryDuration time.Duration
 		expiryDuration, err = time.ParseDuration(expiry)
 		if err != nil {
 			log.Fatalf("Invalid expiry duration: %v", err)
 		}
 		url := ""
-		url, err = blobstoreClient.Sign(id, action, expiryDuration, willEncrypt)
+		url, err = blobstoreClient.Sign(id, action, expiryDuration)
 		if err == nil {
 			os.Stdout.WriteString(url)
 		}

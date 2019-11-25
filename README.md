@@ -38,13 +38,14 @@ bosh-gcscli -c config.json exists <remote-blob>
 ```
 
 ### Generate a signed url for an object
+If there is an encryption key present in the config, then an additional header is sent
+
 ```bash
-bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry> [encrypt]
+bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
 ```
 Where:
  - `<http action>` is GET, PUT, or DELETE
  - `<expiry>` is a duration string less than 7 days (e.g. "6h")
- - `[encrypt]` is optional. If 'encrypt' is supplied, requests with signed URLs will require `x-goog-encryption-key` and `x-goog-encryption-key-hash` headers
 
 ## Configuration
 The command line tool expects a JSON configuration file. Run `bosh-gcscli --help` for details.
