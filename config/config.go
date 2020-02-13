@@ -45,13 +45,6 @@ type GCSCli struct {
 	EncryptionKey []byte `json:"encryption_key"`
 }
 
-const (
-	defaultRegionalLocation          = "US-EAST1"
-	defaultMultiRegionalLocation     = "US"
-	defaultRegionalStorageClass      = "REGIONAL"
-	defaultMultiRegionalStorageClass = "MULTI_REGIONAL"
-)
-
 // DefaultCredentialsSource specifies that credentials should be detected.
 // Application Default Credentials will be used if avaliable.
 // A read-only client will be used otherwise.
@@ -75,17 +68,6 @@ var ErrEmptyServiceAccountFile = errors.New("json_key must be set")
 // ErrWrongLengthEncryptionKey is returned when a non-nil encryption_key
 // in the config is not exactly 32 bytes.
 var ErrWrongLengthEncryptionKey = errors.New("encryption_key not 32 bytes")
-
-// getDefaultStorageClass returns the default StorageClass for a given location.
-// This takes into account regional/multi-regional incompatibility.
-//
-// Empty string is returned if the location cannot be matched.
-func getDefaultStorageClass(location string) string {
-	if _, ok := GCSMultiRegionalLocations[location]; ok {
-		return defaultMultiRegionalStorageClass
-	}
-	return ""
-}
 
 // NewFromReader returns the new gcscli configuration struct from the
 // contents of the reader.
@@ -113,26 +95,4 @@ func NewFromReader(reader io.Reader) (GCSCli, error) {
 	}
 
 	return c, nil
-}
-
-// FitCompatibleLocation returns whether a provided Location
-// can have c.StorageClass objects written to it.
-//
-// When c.StorageClass is empty, a compatible default is filled in.
-//
-// nil return value when compatible, otherwise a non-nil explanation.
-func (c *GCSCli) FitCompatibleLocation(loc string) error {
-	if c.StorageClass == "" {
-		c.StorageClass = getDefaultStorageClass(loc)
-	}
-
-	if c.StorageClass == "" {
-		return nil
-	}
-
-	if _, ok := GCSStorageClass[c.StorageClass]; !ok {
-		return ErrUnknownStorageClass(c.StorageClass)
-	}
-
-	return validLocationStorageClass(loc, c.StorageClass)
 }
