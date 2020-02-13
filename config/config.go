@@ -80,14 +80,11 @@ var ErrWrongLengthEncryptionKey = errors.New("encryption_key not 32 bytes")
 // This takes into account regional/multi-regional incompatibility.
 //
 // Empty string is returned if the location cannot be matched.
-func getDefaultStorageClass(location string) (string, error) {
+func getDefaultStorageClass(location string) string {
 	if _, ok := GCSMultiRegionalLocations[location]; ok {
-		return defaultMultiRegionalStorageClass, nil
+		return defaultMultiRegionalStorageClass
 	}
-	if _, ok := GCSRegionalLocations[location]; ok {
-		return defaultRegionalStorageClass, nil
-	}
-	return "", ErrUnknownLocation
+	return ""
 }
 
 // NewFromReader returns the new gcscli configuration struct from the
@@ -126,20 +123,15 @@ func NewFromReader(reader io.Reader) (GCSCli, error) {
 // nil return value when compatible, otherwise a non-nil explanation.
 func (c *GCSCli) FitCompatibleLocation(loc string) error {
 	if c.StorageClass == "" {
-		var err error
-		if c.StorageClass, err = getDefaultStorageClass(loc); err != nil {
-			return err
-		}
+		c.StorageClass = getDefaultStorageClass(loc)
 	}
 
-	_, regional := GCSRegionalLocations[loc]
-	_, multiRegional := GCSMultiRegionalLocations[loc]
-	if !(regional || multiRegional) {
-		return ErrUnknownLocation
+	if c.StorageClass == "" {
+		return nil
 	}
 
 	if _, ok := GCSStorageClass[c.StorageClass]; !ok {
-		return ErrUnknownStorageClass
+		return ErrUnknownStorageClass(c.StorageClass)
 	}
 
 	return validLocationStorageClass(loc, c.StorageClass)

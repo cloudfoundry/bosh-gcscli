@@ -17,27 +17,8 @@
 package config
 
 import (
-	"errors"
+	"fmt"
 )
-
-// GCSRegionalLocations are the valid locations for a regional bucket.
-var GCSRegionalLocations = map[string]struct{}{
-	"NORTHAMERICA-NORTHEAST1": struct{}{},
-	"US-CENTRAL1":             struct{}{},
-	"US-EAST1":                struct{}{},
-	"US-EAST4":                struct{}{},
-	"US-WEST1":                struct{}{},
-	"SOUTHAMERICA-EAST1":      struct{}{},
-	"EUROPE-WEST1":            struct{}{},
-	"EUROPE-WEST2":            struct{}{},
-	"EUROPE-WEST3":            struct{}{},
-	"EUROPE-WEST4":            struct{}{},
-	"ASIA-EAST1":              struct{}{},
-	"ASIA-NORTHEAST1":         struct{}{},
-	"ASIA-SOUTH1":             struct{}{},
-	"ASIA-SOUTHEAST1":         struct{}{},
-	"AUSTRALIA-SOUTHEAST1":    struct{}{},
-}
 
 // GCSMultiRegionalLocations are the valid locations for
 // a multi-regional bucket
@@ -64,34 +45,34 @@ var GCSStorageClass = map[string]struct{}{
 
 // ErrBadLocationStorageClass is returned when location and storage_class
 // cannot be combined
-var ErrBadLocationStorageClass = errors.New("incompatible location and storage_class")
-
-// ErrUnknownLocation is returned when a location is chosen that this package
-// has no knowledge of.
-var ErrUnknownLocation = errors.New("unknown location")
+func ErrBadLocationStorageClass(location, storageClass string) error {
+	return fmt.Errorf("incompatible location %s and storage_class %s", location, storageClass)
+}
 
 // ErrUnknownStorageClass is returned when a stroage_class is chosen that
 // this package has no knowledge of.
-var ErrUnknownStorageClass = errors.New("unknown storage_class")
+func ErrUnknownStorageClass(storageClass string) error {
+	return fmt.Errorf("unknown storage_class: %s", storageClass)
+}
 
 // validDurability returns nil error on valid location-durability combination
 // and non-nil explanation on all else.
 func validLocationStorageClass(location, storageClass string) error {
 	if _, ok := GCSStorageClass[storageClass]; !ok {
-		return ErrUnknownStorageClass
+		return ErrUnknownStorageClass(storageClass)
 	}
 
 	if storageClass == regional {
 		if _, ok := GCSMultiRegionalLocations[location]; ok {
-			return ErrBadLocationStorageClass
+			return ErrBadLocationStorageClass(location, storageClass)
 		}
 		return nil
 	} else if _, ok := GCSStorageClass[storageClass]; ok {
-		if _, ok := GCSRegionalLocations[location]; ok {
-			return ErrBadLocationStorageClass
+		if _, ok := GCSMultiRegionalLocations[location]; !ok {
+			return ErrBadLocationStorageClass(location, storageClass)
 		}
 		return nil
 	} else {
-		return ErrUnknownStorageClass
+		return nil
 	}
 }
