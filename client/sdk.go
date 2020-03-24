@@ -19,6 +19,7 @@ package client
 import (
 	"context"
 	"errors"
+	"time"
 
 	"golang.org/x/oauth2/google"
 
@@ -36,6 +37,15 @@ func newStorageClients(ctx context.Context, cfg *config.GCSCli) (*storage.Client
 	publicClient, err := storage.NewClient(ctx, option.WithUserAgent(uaString), option.WithHTTPClient(http.DefaultClient))
 	var authenticatedClient *storage.Client
 
+	// NOTE: Due to the implementation of storage.NewClient, we have to set up
+	// the retryingHttpClient as the defaultClient for the rest of this function
+	// so our OAuth token refresher will retry failures.
+	defaultClient := http.DefaultClient
+	defer func() {
+		http.DefaultClient = defaultClient
+	}()
+	http.DefaultClient = newRetryingHttpClient()
+
 	switch cfg.CredentialsSource {
 	case config.NoneCredentialsSource:
 		// no-op
@@ -50,5 +60,16 @@ func newStorageClients(ctx context.Context, cfg *config.GCSCli) (*storage.Client
 	default:
 		return nil, nil, errors.New("unknown credentials_source in configuration")
 	}
+
 	return authenticatedClient, publicClient, err
+}
+
+func newRetryingHttpClient() *http.Client {
+	return &http.Client{
+		Transport: &RetryTransport{
+			Base:            http.DefaultClient.Transport,
+			MaxRetries:      10,
+			FirstRetrySleep: 2 * time.Second,
+		},
+	}
 }
