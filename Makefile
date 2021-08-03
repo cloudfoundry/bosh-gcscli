@@ -34,10 +34,6 @@ fmt:
 lint:
 	ls -d */ | grep -v vendor | xargs -L 1 golint
 
-# Vet code
-vet:
-	go vet $$(ls -d */ | grep -v vendor | grep -v ci | grep -v tools | xargs -n1 -I{} echo ./{})
-
 # Generate a $StorageClass.lock which contains our bucket name
 # used for testing. Buckets must be unique among all in GCS,
 # we cannot simply hardcode a bucket.
@@ -100,7 +96,7 @@ clean-gcs:
 	@rm public.lock
 
 # Perform only unit tests
-test-unit: get-deps clean fmt lint vet build
+test-unit: get-deps clean fmt lint build
 	go run github.com/onsi/ginkgo/ginkgo -r -skipPackage integration
 
 .PHONY:
@@ -110,14 +106,14 @@ ifndef GOOGLE_SERVICE_ACCOUNT
 endif
 
 # Perform all tests, including integration tests.
-test-int: get-deps clean fmt lint vet build prep-gcs check-int-env
+test-int: get-deps clean fmt lint build prep-gcs check-int-env
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 go run github.com/onsi/ginkgo/ginkgo -r
 
 # Perform all non-long tests, including integration tests.
-test-fast-int: get-deps clean fmt lint vet build prep-gcs check-int-env
+test-fast-int: get-deps clean fmt lint build prep-gcs check-int-env
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
@@ -130,7 +126,6 @@ help:
 	 @echo "  fmt: run gofmt on the codebase"
 	 @echo "  clean: run go clean on the codebase"
 	 @echo "  lint: run go lint on the codebase"
-	 @echo "  vet: run go vet on the codebase"
 	 @echo ""
 	 @echo "common testing commands:"
 	 @echo "  prep-gcs: create external GCS buckets needed for integration testing"
