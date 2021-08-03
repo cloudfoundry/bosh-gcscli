@@ -21,9 +21,6 @@ build:
 # Fetch base dependencies as well as testing packages
 get-deps:
 	go get golang.org/x/lint/golint
-	# Ginkgo and omega test tools
-	go get github.com/onsi/ginkgo/ginkgo
-	go get github.com/onsi/gomega
 
 # Cleans up directory and source code with gofmt
 clean:
@@ -39,7 +36,7 @@ lint:
 
 # Vet code
 vet:
-	go vet $$(ls -d */ | grep -v vendor | grep -v ci | xargs -n1 -I{} echo ./{})
+	go vet $$(ls -d */ | grep -v vendor | grep -v ci | grep -v tools | xargs -n1 -I{} echo ./{})
 
 # Generate a $StorageClass.lock which contains our bucket name
 # used for testing. Buckets must be unique among all in GCS,
@@ -104,7 +101,7 @@ clean-gcs:
 
 # Perform only unit tests
 test-unit: get-deps clean fmt lint vet build
-	ginkgo -r -skipPackage integration
+	go run github.com/onsi/ginkgo/ginkgo -r -skipPackage integration
 
 .PHONY:
 check-int-env:
@@ -117,7 +114,7 @@ test-int: get-deps clean fmt lint vet build prep-gcs check-int-env
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
-	 ginkgo -r
+	 go run github.com/onsi/ginkgo/ginkgo -r
 
 # Perform all non-long tests, including integration tests.
 test-fast-int: get-deps clean fmt lint vet build prep-gcs check-int-env
@@ -125,7 +122,7 @@ test-fast-int: get-deps clean fmt lint vet build prep-gcs check-int-env
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 export SKIP_LONG_TESTS="yes" && \
-	 ginkgo -r
+	 go run github.com/onsi/ginkgo/ginkgo -r
 
 help:
 	 @echo "common developer commands:"
