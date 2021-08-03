@@ -26,7 +26,7 @@ var _ = Describe("Docker Image", func() {
 			session, err := Start(command, GinkgoWriter, GinkgoWriter)
 
 			Expect(err).ToNot(HaveOccurred())
-			Eventually(session, "5s").Should(Exit(0))
+			Eventually(session, "15s").Should(Exit(0))
 		})
 	}
 })
