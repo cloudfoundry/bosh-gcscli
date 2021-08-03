@@ -3,3 +3,4 @@ config.json
 regional.lock
 multiregional.lock
 public.lock
+.idea

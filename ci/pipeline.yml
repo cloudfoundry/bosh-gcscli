@@ -34,7 +34,6 @@ jobs:
   - name: run-fast-int-master
     plan:
     - trigger: true
-      passed: [run-unit-master]
       get: gcscli-src
       resource: bosh-gcscli-src-in-master
       passed:
@@ -61,7 +60,6 @@ jobs:
   - name: run-int-master
     plan:
     - trigger: true
-      passed: [run-fast-int-master]
       get: gcscli-src
       resource: bosh-gcscli-src-in-master
       passed:
