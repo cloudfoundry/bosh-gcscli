@@ -98,6 +98,8 @@ var _ = Describe("BlobstoreClient configuration", func() {
 			c, err := NewFromReader(dummyJSONReader)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(len(c.EncryptionKey)).To(Equal(32))
+			Expect(c.EncryptionKeyEncoded).To(Equal("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="))
+			Expect(c.EncryptionKeySha256).To(Equal("Yw3NKWbEM2aRElRIu7JbT/QSpJxzLbLIq8G4WBvXEN0="))
 		})
 	})
 
