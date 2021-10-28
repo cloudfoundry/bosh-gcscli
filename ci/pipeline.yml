@@ -136,6 +136,27 @@ jobs:
         params:
           build: gcscli-src/ci/docker-image
 
+  - name: bump-deps
+    plan:
+    - in_parallel:
+      - get: gcscli-src
+        resource: bosh-gcscli-src-in-develop
+      - get: golang-release
+      - get: weekly
+        trigger: true
+    - task: bump-deps
+      file: golang-release/ci/tasks/shared/bump-deps.yml
+      input_mapping:
+        input_repo: gcscli-src
+      output_mapping:
+        output_repo: bumped-gcscli-src
+    - task: unit-tests
+      file: gcscli-src/ci/tasks/run-unit.yml
+    - put: bosh-gcscli-src-in-develop
+      params:
+        repository: bumped-gcscli-src
+        rebase: true
+
 resources:
   - name: bosh-gcscli-dockerfile
     type: docker-image
@@ -147,8 +168,9 @@ resources:
   - name: bosh-gcscli-src-in-develop
     type: git
     source:
-      uri: https://github.com/cloudfoundry/bosh-gcscli.git
+      uri: git@github.com:cloudfoundry/bosh-gcscli.git
       branch: develop
+      private_key: ((gcscli_deploy_key))
 
   - name: bosh-gcscli-src-in-master
     type: git
@@ -156,6 +178,11 @@ resources:
       uri: git@github.com:cloudfoundry/bosh-gcscli.git
       branch: master
       private_key: ((gcscli_deploy_key))
+
+  - name: golang-release
+    type: git
+    source:
+      uri: https://github.com/bosh-packages/golang-release.git
 
   - name: version-semver-master
     type: semver
@@ -181,3 +208,10 @@ resources:
       bucket: {{gcscli_release_bucket}}
       access_key_id: {{gcscli_release_bucket_access_key}}
       secret_access_key: {{gcscli_release_bucket_secret_key}}
+
+  - name: weekly
+    type: time
+    source:
+      start: 3:00 -0700
+      stop: 4:30 -0700
+      days: [ Saturday ]
