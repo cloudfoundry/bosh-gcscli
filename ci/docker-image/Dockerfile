@@ -12,8 +12,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get -y -qq update && apt-get -y -qq insta
 WORKDIR /tmp/docker-build
 
 # Google SDK
-ENV GCLOUD_VERSION=257.0.0
-ENV GCLOUD_SHA2SUM=2b9eb732206f9c171b6eb9a22083efb98006cc09f1e53f09468626160d3a7cf8
+ENV GCLOUD_VERSION=362.0.0
+ENV GCLOUD_SHA2SUM=15cb05b2b3a63d657b7303343e46980b37041a94048055009328ee24e3ae3efc
 
 RUN wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GCLOUD_VERSION}-linux-x86_64.tar.gz \
     -O gcloud_${GCLOUD_VERSION}_linux_amd64.tar.gz && \
