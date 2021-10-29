@@ -20,7 +20,6 @@ build:
 
 # Fetch base dependencies as well as testing packages
 get-deps:
-	go get golang.org/x/lint/golint
 
 # Cleans up directory and source code with gofmt
 clean:
@@ -32,7 +31,7 @@ fmt:
 
 # Run linter with non-strict checking
 lint:
-	ls -d */ | grep -v vendor | xargs -L 1 golint
+	go vet
 
 # Generate a $StorageClass.lock which contains our bucket name
 # used for testing. Buckets must be unique among all in GCS,
