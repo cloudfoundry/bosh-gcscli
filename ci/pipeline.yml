@@ -128,10 +128,13 @@ jobs:
       params:
         repository: gcscli-src
         rebase: true
+
   - name: build-docker
     plan:
       - get: gcscli-src
         resource: bosh-gcscli-src-in-develop
+      - get: golang-release
+        trigger: true
       - put: bosh-gcscli-dockerfile
         params:
           build: gcscli-src/ci/docker-image
@@ -152,6 +155,8 @@ jobs:
         output_repo: bumped-gcscli-src
     - task: unit-tests
       file: gcscli-src/ci/tasks/run-unit.yml
+      input_mapping:
+        gcscli-src: bumped-gcscli-src
     - put: bosh-gcscli-src-in-develop
       params:
         repository: bumped-gcscli-src
