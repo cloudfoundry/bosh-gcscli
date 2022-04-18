@@ -57,8 +57,7 @@ bosh-gcscli -c config.json exists <remote-blob>
 # - <http action> is GET, PUT, or DELETE
 # - <expiry> is a duration string less than 7 days (e.g. "6h")
 # eg bosh-gcscli -c config.json sign blobid PUT 24h
-bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>
-`
+bosh-gcscli -c config.json sign <remote-blob> <http action> <expiry>`
 
 var (
 	showVer    = flag.Bool("v", false, "Print CLI version")
