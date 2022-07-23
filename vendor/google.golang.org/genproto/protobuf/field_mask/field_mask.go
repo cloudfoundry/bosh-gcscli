@@ -1,4 +1,4 @@
-// Copyright 2022 Google LLC
+// Copyright 2020 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package internal
+// Package field_mask aliases all exported identifiers in
+// package "google.golang.org/protobuf/types/known/fieldmaskpb".
+package field_mask
 
-// Version is the current tagged release of the library.
-const Version = "1.24.0"
+import "google.golang.org/protobuf/types/known/fieldmaskpb"
+
+type FieldMask = fieldmaskpb.FieldMask
+
+var File_google_protobuf_field_mask_proto = fieldmaskpb.File_google_protobuf_field_mask_proto
