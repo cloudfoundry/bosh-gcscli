@@ -2,9 +2,10 @@
 
 check_param() {
   local name=$1
-  local value=$(eval echo '$'$name)
-  if [ "$value" == 'replace-me' ]; then
-    echo "environment variable $name must be set"
+  local value
+  value=$(eval echo '$'"${name}")
+  if [ "${value}" == 'replace-me' ]; then
+    echo "environment variable ${name} must be set"
     exit 1
   fi
 }
@@ -26,9 +27,9 @@ function on_exit {
   for i in "${on_exit_items[@]}"
   do
     for try in $(seq 0 9); do
-      sleep $try
+      sleep "${try}"
       echo "Running cleanup command $i (try: ${try})"
-        eval $i || continue
+        eval "${i}" || continue
       break
     done
   done
@@ -43,15 +44,17 @@ function add_on_exit {
 }
 
 function clean_gcs {
-    pushd ${release_dir}
+    pushd "${release_dir}" || return
         make clean-gcs
-    popd
+    popd || return
 }
 
 function set_env {
     my_dir=$(dirname "$(readlink -f "$0")")
-    export release_dir="$( cd ${my_dir} && cd ../.. && pwd )"
-    export workspace_dir="$( cd ${release_dir} && cd ../../../.. && pwd )"
+    export release_dir
+    release_dir="$( cd "${my_dir}" && cd ../.. && pwd )"
+    export workspace_dir
+    workspace_dir="$( cd "${release_dir}" && cd ../../../.. && pwd )"
 
     export GOPATH=${workspace_dir}
     export PATH=${GOPATH}/bin:${PATH}
@@ -62,7 +65,7 @@ function gcloud_login {
     check_param 'google_json_key_data'
 
     keyfile=$(mktemp)
-    gcloud config set project ${google_project}
-    echo ${google_json_key_data} > ${keyfile}
-    gcloud auth activate-service-account --key-file=${keyfile}
+    gcloud config set project "${google_project:-}"
+    echo "${google_json_key_data:-}" > "${keyfile}"
+    gcloud auth activate-service-account --key-file="${keyfile}"
 }
