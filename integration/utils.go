@@ -18,10 +18,9 @@ package integration
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"os/exec"
-
 	"time"
 
 	"github.com/cloudfoundry/bosh-gcscli/config"
@@ -50,7 +49,7 @@ func GenerateRandomString(params ...int) string {
 func MakeConfigFile(cfg *config.GCSCli) string {
 	cfgBytes, err := json.Marshal(cfg)
 	Expect(err).ToNot(HaveOccurred())
-	tmpFile, err := ioutil.TempFile("", "gcscli-test")
+	tmpFile, err := os.CreateTemp("", "gcscli-test")
 	Expect(err).ToNot(HaveOccurred())
 	_, err = tmpFile.Write(cfgBytes)
 	Expect(err).ToNot(HaveOccurred())
@@ -61,7 +60,7 @@ func MakeConfigFile(cfg *config.GCSCli) string {
 
 // MakeContentFile creates a temporary file with content to upload to GCS
 func MakeContentFile(content string) string {
-	tmpFile, err := ioutil.TempFile("", "gcscli-test-content")
+	tmpFile, err := os.CreateTemp("", "gcscli-test-content")
 	Expect(err).ToNot(HaveOccurred())
 	_, err = tmpFile.Write([]byte(content))
 	Expect(err).ToNot(HaveOccurred())

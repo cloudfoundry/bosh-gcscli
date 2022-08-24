@@ -31,7 +31,8 @@ fmt:
 
 # Run linter with non-strict checking
 lint:
-	go vet
+	go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	golangci-lint run ./...
 
 # Generate a $StorageClass.lock which contains our bucket name
 # used for testing. Buckets must be unique among all in GCS,

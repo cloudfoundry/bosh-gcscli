@@ -19,7 +19,6 @@ package integration
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"cloud.google.com/go/storage"
@@ -54,7 +53,7 @@ var _ = Describe("GCS Public Bucket", func() {
 		Describe("with a public file", func() {
 			BeforeEach(func() {
 				// Place a file in the bucket
-				RunGCSCLI(gcsCLIPath, setupEnv.ConfigPath, "put", setupEnv.ContentFile, setupEnv.GCSFileName)
+				RunGCSCLI(gcsCLIPath, setupEnv.ConfigPath, "put", setupEnv.ContentFile, setupEnv.GCSFileName) //nolint:errcheck
 
 				// Make the file public
 				rwClient, err := newSDK(setupEnv.ctx, *setupEnv.Config)
@@ -64,7 +63,7 @@ var _ = Describe("GCS Public Bucket", func() {
 				Expect(obj.ACL().Set(context.Background(), storage.AllUsers, storage.RoleReader)).To(Succeed())
 			})
 			AfterEach(func() {
-				RunGCSCLI(gcsCLIPath, setupEnv.ConfigPath, "delete", setupEnv.GCSFileName)
+				RunGCSCLI(gcsCLIPath, setupEnv.ConfigPath, "delete", setupEnv.GCSFileName) //nolint:errcheck
 				publicEnv.Cleanup()
 			})
 
@@ -75,7 +74,7 @@ var _ = Describe("GCS Public Bucket", func() {
 			})
 
 			It("can get", func() {
-				tmpLocalFile, err := ioutil.TempFile("", "gcscli-download")
+				tmpLocalFile, err := os.CreateTemp("", "gcscli-download")
 				Expect(err).ToNot(HaveOccurred())
 				defer os.Remove(tmpLocalFile.Name())
 				Expect(tmpLocalFile.Close()).To(Succeed())
@@ -84,7 +83,7 @@ var _ = Describe("GCS Public Bucket", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(session.ExitCode()).To(BeZero(), fmt.Sprintf("unexpected '%s'", session.Err.Contents()))
 
-				gottenBytes, err := ioutil.ReadFile(tmpLocalFile.Name())
+				gottenBytes, err := os.ReadFile(tmpLocalFile.Name())
 				Expect(err).ToNot(HaveOccurred())
 				Expect(string(gottenBytes)).To(Equal(setupEnv.ExpectedString))
 			})
