@@ -119,7 +119,7 @@ var _ = Describe("Integration", func() {
 				err = blobstoreClient.Put(&limited, env.GCSFileName)
 				Expect(err).ToNot(HaveOccurred())
 
-				blobstoreClient.Delete(env.GCSFileName)
+				blobstoreClient.Delete(env.GCSFileName) //nolint:errcheck
 				Expect(err).ToNot(HaveOccurred())
 			})
 		})
