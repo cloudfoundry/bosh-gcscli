@@ -19,6 +19,8 @@ package integration
 import (
 	"os"
 
+	"io/ioutil"
+
 	. "github.com/onsi/gomega"
 )
 
@@ -47,7 +49,7 @@ func AssertLifecycleWorks(gcsCLIPath string, ctx AssertContext) {
 	Expect(session.ExitCode()).To(BeZero())
 	Expect(session.Err.Contents()).To(MatchRegexp("File '.*' exists in bucket '.*'"))
 
-	tmpLocalFile, err := os.CreateTemp("", "gcscli-download")
+	tmpLocalFile, err := ioutil.TempFile("", "gcscli-download")
 	Expect(err).ToNot(HaveOccurred())
 	defer func() { _ = os.Remove(tmpLocalFile.Name()) }()
 	err = tmpLocalFile.Close()
@@ -58,7 +60,7 @@ func AssertLifecycleWorks(gcsCLIPath string, ctx AssertContext) {
 	Expect(err).ToNot(HaveOccurred())
 	Expect(session.ExitCode()).To(BeZero())
 
-	gottenBytes, err := os.ReadFile(tmpLocalFile.Name())
+	gottenBytes, err := ioutil.ReadFile(tmpLocalFile.Name())
 	Expect(err).ToNot(HaveOccurred())
 	Expect(string(gottenBytes)).To(Equal(ctx.ExpectedString))
 

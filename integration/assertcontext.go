@@ -22,6 +22,8 @@ import (
 
 	"github.com/cloudfoundry/bosh-gcscli/config"
 
+	"io/ioutil"
+
 	. "github.com/onsi/gomega"
 	"golang.org/x/net/context"
 )
@@ -140,11 +142,11 @@ func AsDefaultCredentials(ctx *AssertContext) {
 	Expect(conf).ToNot(BeNil(),
 		"cannot set static AssertContext without config")
 
-	tempFile, err := os.CreateTemp("", "bosh-gcscli-service-account-file")
+	tempFile, err := ioutil.TempFile("", "bosh-gcscli-service-account-file")
 	Expect(err).ToNot(HaveOccurred())
 	defer tempFile.Close()
 
-	tempFile.WriteString(ctx.serviceAccountFile) //nolint:errcheck
+	tempFile.WriteString(ctx.serviceAccountFile)
 
 	ctx.serviceAccountPath = tempFile.Name()
 	os.Setenv(GoogleAppCredentialsEnv, ctx.serviceAccountPath)
