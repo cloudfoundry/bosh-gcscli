@@ -127,7 +127,6 @@ jobs:
       resource: bosh-gcscli-src-in-main
       params:
         repository: gcscli-src
-        rebase: true
 
   - name: build-docker
     plan:
