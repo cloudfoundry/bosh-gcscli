@@ -8,11 +8,11 @@ jobs:
     - task: unit-tests
       file: gcscli-src/ci/tasks/run-unit.yml
 
-  - name: run-unit-master
+  - name: run-unit-main
     plan:
     - trigger: true
       get: gcscli-src
-      resource: bosh-gcscli-src-in-master
+      resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
 
@@ -31,11 +31,11 @@ jobs:
         google_project: {{google_project}}
         google_json_key_data: {{google_json_key_data}}
 
-  - name: run-fast-int-master
+  - name: run-fast-int-main
     plan:
     - trigger: true
       get: gcscli-src
-      resource: bosh-gcscli-src-in-master
+      resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
 
@@ -57,11 +57,11 @@ jobs:
         google_project: {{google_project}}
         google_json_key_data: {{google_json_key_data}}
 
-  - name: run-int-master
+  - name: run-int-main
     plan:
     - trigger: true
       get: gcscli-src
-      resource: bosh-gcscli-src-in-master
+      resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
 
@@ -71,18 +71,18 @@ jobs:
         google_project: {{google_project}}
         google_json_key_data: {{google_json_key_data}}
 
-  - name: promote-master
+  - name: promote-main
     plan:
     - in_parallel:
       - get: gcscli-src
-        resource: bosh-gcscli-src-in-master
+        resource: bosh-gcscli-src-in-main
         trigger: true
         passed:
-        - run-unit-master
-        - run-fast-int-master
-        - run-int-master
+        - run-unit-main
+        - run-fast-int-main
+        - run-int-main
       - put: version-semver
-        resource: version-semver-master
+        resource: version-semver-main
         params:
           bump: patch
     - in_parallel:
@@ -100,11 +100,11 @@ jobs:
           GOOS: windows
     - in_parallel:
       - put: release-bucket-linux
-        resource: release-bucket-linux-master
+        resource: release-bucket-linux-main
         params:
           file: out-linux/bosh-gcscli-*-linux-amd64
       - put: release-bucket-windows
-        resource: release-bucket-windows-master
+        resource: release-bucket-windows-main
         params:
           file: out-windows/bosh-gcscli-*-windows-amd64.exe
     - params:
@@ -112,7 +112,7 @@ jobs:
         tag: version-semver/number
         tag_prefix: v
       put: gcscli-src
-      resource: bosh-gcscli-src-in-master
+      resource: bosh-gcscli-src-in-main
 
   - name: promote-develop
     plan:
@@ -124,7 +124,7 @@ jobs:
       - run-fast-int-develop
       - run-int-develop
     - put: gcs-cli
-      resource: bosh-gcscli-src-in-master
+      resource: bosh-gcscli-src-in-main
       params:
         repository: gcscli-src
         rebase: true
@@ -177,11 +177,11 @@ resources:
       branch: develop
       private_key: ((gcscli_deploy_key))
 
-  - name: bosh-gcscli-src-in-master
+  - name: bosh-gcscli-src-in-main
     type: git
     source:
       uri: git@github.com:cloudfoundry/bosh-gcscli.git
-      branch: master
+      branch: main
       private_key: ((gcscli_deploy_key))
 
   - name: golang-release
@@ -189,7 +189,7 @@ resources:
     source:
       uri: https://github.com/bosh-packages/golang-release.git
 
-  - name: version-semver-master
+  - name: version-semver-main
     type: semver
     source:
       initial_version: 0.0.1
@@ -198,7 +198,7 @@ resources:
       access_key_id: {{gcscli_release_bucket_access_key}}
       secret_access_key: {{gcscli_release_bucket_secret_key}}
 
-  - name: release-bucket-linux-master
+  - name: release-bucket-linux-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-linux-amd64
@@ -206,7 +206,7 @@ resources:
       access_key_id: {{gcscli_release_bucket_access_key}}
       secret_access_key: {{gcscli_release_bucket_secret_key}}
 
-  - name: release-bucket-windows-master
+  - name: release-bucket-windows-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-windows-amd64\.exe
