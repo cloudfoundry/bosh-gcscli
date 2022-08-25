@@ -3,21 +3,18 @@ FROM bosh/golang-release
 ENV DEBIAN_FRONTEND "noninteractive"
 
 RUN apt-get update -y \
-    && apt-get -y install --no-install-recommends \
-        gpg-agent \
-        software-properties-common \
-    && apt-get update -y \
     && apt-get install -y --no-install-recommends \
-        apt-transport-https \
-        ca-certificates \
-        gcc \
-        git-core \
-        gnupg \
-        make \
-        wget \
-        curl
+        build-essential \
+        curl \
+        git \
+        wget
 
-RUN export GCLOUD_KEYFILE="/usr/share/keyrings/cloud.google.gpg" \
+RUN apt-get update -y \
+    && apt-get -y install --no-install-recommends \
+      apt-transport-https \
+      ca-certificates \
+      gnupg \
+    && export GCLOUD_KEYFILE="/usr/share/keyrings/cloud.google.gpg" \
     && echo "deb [signed-by=${GCLOUD_KEYFILE}] https://packages.cloud.google.com/apt cloud-sdk main" \
     | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list \
     && curl -fSL https://packages.cloud.google.com/apt/doc/apt-key.gpg \
