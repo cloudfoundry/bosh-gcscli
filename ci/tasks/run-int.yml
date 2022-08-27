@@ -5,9 +5,9 @@ image_resource:
   source: {repository: bosh/bosh-gcscli}
 inputs:
 - name: gcscli-src
-  path: src/github.com/cloudfoundry/bosh-gcscli
+  path: bosh-gcscli
 run:
-  path: src/github.com/cloudfoundry/bosh-gcscli/ci/tasks/run-int.sh
+  path: bosh-gcscli/ci/tasks/run-int.sh
 params:
   google_project: replace-me
   google_json_key_data: |

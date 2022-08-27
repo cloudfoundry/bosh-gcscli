@@ -50,14 +50,14 @@ function clean_gcs {
 }
 
 function set_env {
-    my_dir=$(dirname "$(readlink -f "$0")")
+    my_dir=$(dirname "$(readlink -f "${0}")")
     export release_dir
     release_dir="$( cd "${my_dir}" && cd ../.. && pwd )"
     export workspace_dir
-    workspace_dir="$( cd "${release_dir}" && cd ../../../.. && pwd )"
+    workspace_dir="$( cd "${release_dir}" && cd .. && pwd )"
 
-    export GOPATH=${workspace_dir}
-    export PATH=${GOPATH}/bin:${PATH}
+    go_bin=$(go env GOPATH)
+    export PATH=${go_bin}/bin:${PATH}
 }
 
 function gcloud_login {

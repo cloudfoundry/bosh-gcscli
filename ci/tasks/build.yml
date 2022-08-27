@@ -5,11 +5,11 @@ image_resource:
   source: {repository: bosh/bosh-gcscli}
 inputs:
 - name: gcscli-src
-  path: src/github.com/cloudfoundry/bosh-gcscli
+  path: bosh-gcscli
 - name: version-semver
 outputs:
 - name: out
 run:
-  path: src/github.com/cloudfoundry/bosh-gcscli/ci/tasks/build.sh
+  path: bosh-gcscli/ci/tasks/build.sh
 params:
   GOOS: linux
