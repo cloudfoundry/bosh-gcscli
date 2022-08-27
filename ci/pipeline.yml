@@ -28,8 +28,8 @@ jobs:
     - task: fast-integration-tests
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
-        google_project: {{google_project}}
-        google_json_key_data: {{google_json_key_data}}
+        google_project: ((google_project))
+        google_json_key_data: ((google_json_key_data))
 
   - name: run-fast-int-main
     plan:
@@ -42,8 +42,8 @@ jobs:
     - task: fast-integration-tests
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
-        google_project: {{google_project}}
-        google_json_key_data: {{google_json_key_data}}
+        google_project: ((google_project))
+        google_json_key_data: ((google_json_key_data))
 
   - name: run-int-develop
     plan:
@@ -54,8 +54,8 @@ jobs:
     - task: full-integration-tests
       file: gcscli-src/ci/tasks/run-int.yml
       params:
-        google_project: {{google_project}}
-        google_json_key_data: {{google_json_key_data}}
+        google_project: ((google_project))
+        google_json_key_data: ((google_json_key_data))
 
   - name: run-int-main
     plan:
@@ -68,8 +68,8 @@ jobs:
     - task: full-integration-tests
       file: gcscli-src/ci/tasks/run-int.yml
       params:
-        google_project: {{google_project}}
-        google_json_key_data: {{google_json_key_data}}
+        google_project: ((google_project))
+        google_json_key_data: ((google_json_key_data))
 
   - name: promote-main
     plan:
@@ -193,25 +193,25 @@ resources:
     source:
       initial_version: 0.0.1
       key: current-version
-      bucket: {{gcscli_release_bucket}}
-      access_key_id: {{gcscli_release_bucket_access_key}}
-      secret_access_key: {{gcscli_release_bucket_secret_key}}
+      bucket: ((gcscli_release_bucket))
+      access_key_id: ((gcscli_release_bucket_access_key))
+      secret_access_key: ((gcscli_release_bucket_secret_key))
 
   - name: release-bucket-linux-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-linux-amd64
-      bucket: {{gcscli_release_bucket}}
-      access_key_id: {{gcscli_release_bucket_access_key}}
-      secret_access_key: {{gcscli_release_bucket_secret_key}}
+      bucket: ((gcscli_release_bucket))
+      access_key_id: ((gcscli_release_bucket_access_key))
+      secret_access_key: ((gcscli_release_bucket_secret_key))
 
   - name: release-bucket-windows-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-windows-amd64\.exe
-      bucket: {{gcscli_release_bucket}}
-      access_key_id: {{gcscli_release_bucket_access_key}}
-      secret_access_key: {{gcscli_release_bucket_secret_key}}
+      bucket: ((gcscli_release_bucket))
+      access_key_id: ((gcscli_release_bucket_access_key))
+      secret_access_key: ((gcscli_release_bucket_secret_key))
 
   - name: weekly
     type: time
