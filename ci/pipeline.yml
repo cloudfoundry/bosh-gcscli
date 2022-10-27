@@ -4,8 +4,11 @@ jobs:
     - trigger: true
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
+    - get: bosh-gcscli-dockerfile
+      trigger: true
 
     - task: unit-tests
+      image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-unit.yml
 
   - name: run-unit-main
@@ -15,8 +18,11 @@ jobs:
       resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
+    - get: bosh-gcscli-dockerfile
+      trigger: true
 
     - task: unit-tests
+      image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-unit.yml
 
   - name: run-fast-int-develop
@@ -24,8 +30,11 @@ jobs:
     - trigger: true
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
+    - get: bosh-gcscli-dockerfile
+      trigger: true
 
     - task: fast-integration-tests
+      image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
         google_project: ((google_project))
@@ -38,8 +47,11 @@ jobs:
       resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
+    - get: bosh-gcscli-dockerfile
+      trigger: true
 
     - task: fast-integration-tests
+      image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
         google_project: ((google_project))
@@ -50,8 +62,11 @@ jobs:
     - trigger: true
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
+    - get: bosh-gcscli-dockerfile
+      trigger: true
 
     - task: full-integration-tests
+      image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-int.yml
       params:
         google_project: ((google_project))
@@ -64,8 +79,11 @@ jobs:
       resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
+    - get: bosh-gcscli-dockerfile
+      trigger: true
 
     - task: full-integration-tests
+      image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-int.yml
       params:
         google_project: ((google_project))
@@ -81,18 +99,27 @@ jobs:
         - run-unit-main
         - run-fast-int-main
         - run-int-main
+      - get: bosh-gcscli-dockerfile
+        trigger: true
+        passed:
+          - run-unit-main
+          - run-fast-int-main
+          - run-int-main
+
       - put: version-semver
         resource: version-semver-main
         params:
           bump: patch
     - in_parallel:
       - task: build-linux
+        image: bosh-gcscli-dockerfile
         file: gcscli-src/ci/tasks/build.yml
         output_mapping:
           out: out-linux
         params:
           GOOS: linux
       - task: build-windows
+        image: bosh-gcscli-dockerfile
         file: gcscli-src/ci/tasks/build.yml
         output_mapping:
           out: out-windows
@@ -132,7 +159,7 @@ jobs:
     plan:
       - get: gcscli-src
         resource: bosh-gcscli-src-in-develop
-      - get: golang-release
+      - get: bosh-golang-release-image
         trigger: true
       - put: bosh-gcscli-dockerfile
         params:
@@ -166,6 +193,13 @@ resources:
     type: docker-image
     source:
       repository: bosh/bosh-gcscli
+      username: ((docker.username))
+      password: ((docker.password))
+
+  - name: bosh-golang-release-image
+    type: docker-image
+    source:
+      repository: bosh/golang-release
       username: ((docker.username))
       password: ((docker.password))
 
