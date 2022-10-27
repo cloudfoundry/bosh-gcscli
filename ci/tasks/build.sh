@@ -25,7 +25,7 @@ pushd "${release_dir}" > /dev/null
   git_rev=$(git rev-parse --short HEAD)
   version="${semver}-${git_rev}-${timestamp}"
 
-  echo -e "\n building artifact..."
+  echo -e "\n building artifact using $(go version)..."
   go build -ldflags "-X main.version=${version}" \
     -o "out/${binname}"                          \
     github.com/cloudfoundry/bosh-gcscli
