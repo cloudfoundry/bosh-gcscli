@@ -8,5 +8,6 @@ pushd "${my_dir}" > /dev/null
 popd > /dev/null
 
 pushd "${release_dir}"
+    echo "running with go version: $(go version)"
     make test-unit
 popd > /dev/null

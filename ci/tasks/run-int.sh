@@ -10,5 +10,6 @@ popd > /dev/null
 
 pushd "${release_dir}"
     trap clean_gcs EXIT
+    echo "running with go version: $(go version)"
     GOOGLE_SERVICE_ACCOUNT="${google_json_key_data}" make test-int
 popd
