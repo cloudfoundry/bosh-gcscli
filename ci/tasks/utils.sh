@@ -61,8 +61,8 @@ function set_env {
 }
 
 function gcloud_login {
-    check_param 'google_project'
     check_param 'google_json_key_data'
+    google_project=$(echo ${google_json_key_data} | jq -r .project_id)
 
     keyfile=$(mktemp)
     gcloud config set project "${google_project:-}"

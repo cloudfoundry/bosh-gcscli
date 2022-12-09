@@ -9,6 +9,5 @@ inputs:
 run:
   path: bosh-gcscli/ci/tasks/run-fast-int.sh
 params:
-  google_project: replace-me
   google_json_key_data: |
     replace-me

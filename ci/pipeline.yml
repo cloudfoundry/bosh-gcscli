@@ -37,8 +37,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
-        google_project: ((google_project))
-        google_json_key_data: ((google_json_key_data))
+        google_json_key_data: ((gcp_credentials_json))
 
   - name: run-fast-int-main
     plan:
@@ -54,8 +53,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
-        google_project: ((google_project))
-        google_json_key_data: ((google_json_key_data))
+        google_json_key_data: ((gcp_credentials_json))
 
   - name: run-int-develop
     plan:
@@ -69,8 +67,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-int.yml
       params:
-        google_project: ((google_project))
-        google_json_key_data: ((google_json_key_data))
+        google_json_key_data: ((gcp_credentials_json))
 
   - name: run-int-main
     plan:
@@ -86,8 +83,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-int.yml
       params:
-        google_project: ((google_project))
-        google_json_key_data: ((google_json_key_data))
+        google_json_key_data: ((gcp_credentials_json))
 
   - name: promote-main
     plan:
