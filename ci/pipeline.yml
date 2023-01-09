@@ -224,24 +224,24 @@ resources:
       initial_version: 0.0.1
       key: current-version
       bucket: ((gcscli_release_bucket))
-      access_key_id: ((gcscli_release_bucket_access_key))
-      secret_access_key: ((gcscli_release_bucket_secret_key))
+      access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
+      secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
 
   - name: release-bucket-linux-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-linux-amd64
       bucket: ((gcscli_release_bucket))
-      access_key_id: ((gcscli_release_bucket_access_key))
-      secret_access_key: ((gcscli_release_bucket_secret_key))
+      access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
+      secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
 
   - name: release-bucket-windows-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-windows-amd64\.exe
       bucket: ((gcscli_release_bucket))
-      access_key_id: ((gcscli_release_bucket_access_key))
-      secret_access_key: ((gcscli_release_bucket_secret_key))
+      access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
+      secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
 
   - name: weekly
     type: time
