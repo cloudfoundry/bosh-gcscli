@@ -204,14 +204,14 @@ resources:
     source:
       uri: git@github.com:cloudfoundry/bosh-gcscli.git
       branch: develop
-      private_key: ((gcscli_deploy_key))
+      private_key: ((github_deploy_key_bosh-gcscli.private_key))
 
   - name: bosh-gcscli-src-in-main
     type: git
     source:
       uri: git@github.com:cloudfoundry/bosh-gcscli.git
       branch: main
-      private_key: ((gcscli_deploy_key))
+      private_key: ((github_deploy_key_bosh-gcscli.private_key))
 
   - name: golang-release
     type: git
@@ -223,7 +223,7 @@ resources:
     source:
       initial_version: 0.0.1
       key: current-version
-      bucket: ((gcscli_release_bucket))
+      bucket: bosh-gcscli
       access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
       secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
 
@@ -231,7 +231,7 @@ resources:
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-linux-amd64
-      bucket: ((gcscli_release_bucket))
+      bucket: bosh-gcscli
       access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
       secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
 
@@ -239,7 +239,7 @@ resources:
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-windows-amd64\.exe
-      bucket: ((gcscli_release_bucket))
+      bucket: bosh-gcscli
       access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
       secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
 
