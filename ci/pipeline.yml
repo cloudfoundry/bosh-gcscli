@@ -37,7 +37,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
-        google_json_key_data: ((gcp_credentials_json))
+        google_json_key_data: ((gcp_service_key_json))
 
   - name: run-fast-int-main
     plan:
@@ -53,7 +53,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
-        google_json_key_data: ((gcp_credentials_json))
+        google_json_key_data: ((gcp_service_key_json))
 
   - name: run-int-develop
     plan:
@@ -67,7 +67,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-int.yml
       params:
-        google_json_key_data: ((gcp_credentials_json))
+        google_json_key_data: ((gcp_service_key_json))
 
   - name: run-int-main
     plan:
@@ -83,7 +83,7 @@ jobs:
       image: bosh-gcscli-dockerfile
       file: gcscli-src/ci/tasks/run-int.yml
       params:
-        google_json_key_data: ((gcp_credentials_json))
+        google_json_key_data: ((gcp_service_key_json))
 
   - name: promote-main
     plan:
@@ -196,15 +196,15 @@ resources:
     type: docker-image
     source:
       repository: bosh/bosh-gcscli
-      username: ((docker.username))
-      password: ((docker.password))
+      username: ((dockerhub_username))
+      password: ((dockerhub_password))
 
   - name: bosh-golang-release-image
     type: docker-image
     source:
       repository: bosh/golang-release
-      username: ((docker.username))
-      password: ((docker.password))
+      username: ((dockerhub_username))
+      password: ((dockerhub_password))
 
   - name: bosh-gcscli-src-in-develop
     type: git
@@ -230,26 +230,25 @@ resources:
     source:
       initial_version: 0.0.1
       key: current-version
-      bucket: bosh-gcscli
-      access_key_id: ((bosh-gcscli-uploader_assume_aws_access_key.username))
-      secret_access_key: ((bosh-gcscli-uploader_assume_aws_access_key.password))
-      assume_role_arn: ((bosh-gcscli-uploader_assume_aws_access_key.role_arn))
+      bucket: bosh-gcscli-artifacts
+      access_key_id: ((bosh_gcscli_pipeline.username))
+      secret_access_key: ((bosh_gcscli_pipeline.password))
 
   - name: release-bucket-linux-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-linux-amd64
-      bucket: bosh-gcscli
-      access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
-      secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
+      bucket: bosh-gcscli-artifacts
+      access_key_id: ((bosh_gcscli_pipeline.username))
+      secret_access_key: ((bosh_gcscli_pipeline.password))
 
   - name: release-bucket-windows-main
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-windows-amd64\.exe
-      bucket: bosh-gcscli
-      access_key_id: ((bosh-gcscli-uploader_aws_access_key.username))
-      secret_access_key: ((bosh-gcscli-uploader_aws_access_key.password))
+      bucket: bosh-gcscli-artifacts
+      access_key_id: ((bosh_gcscli_pipeline.username))
+      secret_access_key: ((bosh_gcscli_pipeline.password))
 
   - name: weekly
     type: time
