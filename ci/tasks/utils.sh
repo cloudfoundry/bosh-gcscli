@@ -65,7 +65,7 @@ function gcloud_login {
     google_project=$(echo ${google_json_key_data} | jq -r .project_id)
 
     keyfile=$(mktemp)
-    gcloud config set project "${google_project:-}"
     echo "${google_json_key_data:-}" > "${keyfile}"
     gcloud auth activate-service-account --key-file="${keyfile}"
+    gcloud config set project "${google_project:-}"
 }
