@@ -5,10 +5,10 @@ go 1.21
 require (
 	cloud.google.com/go/storage v1.33.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.27.10
+	github.com/onsi/gomega v1.28.0
 	golang.org/x/net v0.15.0
 	golang.org/x/oauth2 v0.12.0
-	google.golang.org/api v0.142.0
+	google.golang.org/api v0.143.0
 )
 
 require (
