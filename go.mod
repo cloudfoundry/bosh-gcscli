@@ -5,7 +5,7 @@ go 1.21
 require (
 	cloud.google.com/go/storage v1.33.0
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.28.0
+	github.com/onsi/gomega v1.29.0
 	golang.org/x/net v0.17.0
 	golang.org/x/oauth2 v0.13.0
 	google.golang.org/api v0.148.0
@@ -13,17 +13,17 @@ require (
 
 require (
 	cloud.google.com/go v0.110.9 // indirect
-	cloud.google.com/go/compute v1.23.1 // indirect
+	cloud.google.com/go/compute v1.23.2 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
-	cloud.google.com/go/iam v1.1.3 // indirect
-	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	cloud.google.com/go/iam v1.1.4 // indirect
+	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
-	github.com/google/uuid v1.3.1 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.3.1 // indirect
+	github.com/google/uuid v1.4.0 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
 	go.opencensus.io v0.24.0 // indirect
