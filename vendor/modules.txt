@@ -249,7 +249,7 @@ golang.org/x/tools/go/ast/inspector
 golang.org/x/tools/internal/typeparams
 # golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028
 ## explicit; go 1.18
-# google.golang.org/api v0.152.0
+# google.golang.org/api v0.153.0
 ## explicit; go 1.19
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
