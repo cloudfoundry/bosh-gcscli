@@ -1,14 +1,14 @@
 module github.com/cloudfoundry/bosh-gcscli
 
-go 1.22
+go 1.21
 
 require (
 	cloud.google.com/go/storage v1.37.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.31.1
 	golang.org/x/net v0.21.0
-	golang.org/x/oauth2 v0.16.0
-	google.golang.org/api v0.162.0
+	golang.org/x/oauth2 v0.17.0
+	google.golang.org/api v0.163.0
 )
 
 require (
