@@ -3,16 +3,16 @@ module github.com/cloudfoundry/bosh-gcscli
 go 1.21.0
 
 require (
-	cloud.google.com/go/storage v1.39.1
+	cloud.google.com/go/storage v1.40.0
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.32.0
 	golang.org/x/net v0.22.0
 	golang.org/x/oauth2 v0.18.0
-	google.golang.org/api v0.171.0
+	google.golang.org/api v0.172.0
 )
 
 require (
-	cloud.google.com/go v0.112.1 // indirect
+	cloud.google.com/go v0.112.2 // indirect
 	cloud.google.com/go/compute v1.25.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.7 // indirect
@@ -42,9 +42,9 @@ require (
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.19.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/genproto v0.0.0-20240318140521-94a12d6c2237 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240318140521-94a12d6c2237 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240318140521-94a12d6c2237 // indirect
+	google.golang.org/genproto v0.0.0-20240325203815-454cdb8f5daa // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240325203815-454cdb8f5daa // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa // indirect
 	google.golang.org/grpc v1.62.1 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
