@@ -27,7 +27,7 @@ import (
 
 	"github.com/cloudfoundry/bosh-gcscli/config"
 
-	. "github.com/onsi/ginkgo/extensions/table"
+	. "github.com/onsi/ginkgo/v2"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"golang.org/x/oauth2/jwt"
