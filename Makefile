@@ -101,7 +101,7 @@ clean-gcs:
 
 # Perform only unit tests
 test-unit: get-deps clean fmt lint build
-	go run github.com/onsi/ginkgo/ginkgo -r -skipPackage integration
+	go run github.com/onsi/ginkgo/v2/ginkgo run -r --skip-package integration
 
 .PHONY:
 check-int-env:
@@ -114,7 +114,7 @@ test-int: get-deps clean fmt lint build prep-gcs check-int-env
 	 export MULTIREGIONAL_BUCKET_NAME="$$(cat multiregional.lock)" && \
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
-	 go run github.com/onsi/ginkgo/ginkgo -r
+	 go run github.com/onsi/ginkgo/v2/ginkgo run -r
 
 # Perform all non-long tests, including integration tests.
 test-fast-int: get-deps clean fmt lint build prep-gcs check-int-env
@@ -122,7 +122,7 @@ test-fast-int: get-deps clean fmt lint build prep-gcs check-int-env
 	 export REGIONAL_BUCKET_NAME="$$(cat regional.lock)" && \
 	 export PUBLIC_BUCKET_NAME="$$(cat public.lock)" && \
 	 export SKIP_LONG_TESTS="yes" && \
-	 go run github.com/onsi/ginkgo/ginkgo -r
+	 go run github.com/onsi/ginkgo/v2/ginkgo run -r
 
 help:
 	 @echo "common developer commands:"

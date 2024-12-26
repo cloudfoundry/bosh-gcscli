@@ -22,11 +22,11 @@ import (
 	"io"
 	"os"
 
+	. "github.com/onsi/ginkgo/v2"
+	. "github.com/onsi/gomega"
+
 	"github.com/cloudfoundry/bosh-gcscli/client"
 	"github.com/cloudfoundry/bosh-gcscli/config"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/ginkgo/extensions/table"
-	. "github.com/onsi/gomega"
 )
 
 // randReadSeeker is a ReadSeeker which returns random content and
@@ -82,7 +82,7 @@ var _ = Describe("Integration", func() {
 				env.AddConfig(config)
 				AssertLifecycleWorks(gcsCLIPath, env)
 			},
-			configurations...)
+			configurations)
 
 		DescribeTable("Delete silently ignores that the file doesn't exist",
 			func(config *config.GCSCli) {
@@ -93,7 +93,7 @@ var _ = Describe("Integration", func() {
 				Expect(err).ToNot(HaveOccurred())
 				Expect(session.ExitCode()).To(BeZero())
 			},
-			configurations...)
+			configurations)
 
 		Context("with a regional bucket", func() {
 			var cfg *config.GCSCli
@@ -134,7 +134,7 @@ var _ = Describe("Integration", func() {
 				err = blobstoreClient.Put(&badReadSeeker{}, env.GCSFileName)
 				Expect(err).To(HaveOccurred())
 			},
-			configurations...)
+			configurations)
 
 		DescribeTable("Invalid Get should fail",
 			func(config *config.GCSCli) {
@@ -146,6 +146,6 @@ var _ = Describe("Integration", func() {
 				Expect(session.ExitCode()).ToNot(BeZero())
 				Expect(session.Err.Contents()).To(ContainSubstring("object doesn't exist"))
 			},
-			configurations...)
+			configurations)
 	})
 })
