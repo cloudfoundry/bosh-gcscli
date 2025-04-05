@@ -19,7 +19,7 @@ package integration
 import (
 	"os"
 
-	. "github.com/onsi/gomega"
+	. "github.com/onsi/gomega" //nolint:staticcheck
 )
 
 // NoLongEnv must be set in the environment
@@ -49,7 +49,7 @@ func AssertLifecycleWorks(gcsCLIPath string, ctx AssertContext) {
 
 	tmpLocalFile, err := os.CreateTemp("", "gcscli-download")
 	Expect(err).ToNot(HaveOccurred())
-	defer func() { _ = os.Remove(tmpLocalFile.Name()) }()
+	defer os.Remove(tmpLocalFile.Name()) //nolint:errcheck
 	err = tmpLocalFile.Close()
 	Expect(err).ToNot(HaveOccurred())
 

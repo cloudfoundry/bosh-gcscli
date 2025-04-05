@@ -14,12 +14,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - uses: golangci/golangci-lint-action@v6
-        if: ${{ matrix.os == 'windows-2019' }}
-      - uses: golangci/golangci-lint-action@v6
-        if: ${{ matrix.os != 'windows-2019' }}
-        with:
-          args: --enable goimports
+      - uses: golangci/golangci-lint-action@v7
 
   test-unit: # <- name
     strategy:

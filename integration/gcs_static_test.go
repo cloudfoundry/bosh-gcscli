@@ -21,9 +21,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/bosh-gcscli/config"
 )
 
 var _ = Describe("Integration", func() {
@@ -66,7 +67,7 @@ var _ = Describe("Integration", func() {
 			resp, err := http.DefaultClient.Do(req)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(resp.StatusCode).To(Equal(200))
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 		})
 
 		Context("encryption key is set", func() {
@@ -99,9 +100,9 @@ var _ = Describe("Integration", func() {
 				signedGetUrl := string(session.Out.Contents())
 				Expect(signedGetUrl).ToNot(BeNil())
 
-				stuff := strings.NewReader(`stuff`)
-				putReq, _ := http.NewRequest("PUT", signedPutUrl, stuff)
-				getReq, _ := http.NewRequest("GET", signedGetUrl, nil)
+				stuff := strings.NewReader(`stuff`)                      //nolint:errcheck
+				putReq, _ := http.NewRequest("PUT", signedPutUrl, stuff) //nolint:errcheck
+				getReq, _ := http.NewRequest("GET", signedGetUrl, nil)   //nolint:errcheck
 
 				headers := map[string][]string{
 					"x-goog-encryption-algorithm":  []string{"AES256"},
@@ -115,12 +116,12 @@ var _ = Describe("Integration", func() {
 				resp, err := http.DefaultClient.Do(putReq)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(200))
-				resp.Body.Close()
+				resp.Body.Close() //nolint:errcheck
 
 				resp, err = http.DefaultClient.Do(getReq)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(resp.StatusCode).To(Equal(200))
-				resp.Body.Close()
+				resp.Body.Close() //nolint:errcheck
 			})
 		})
 	})
