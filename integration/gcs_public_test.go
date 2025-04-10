@@ -22,10 +22,11 @@ import (
 	"os"
 
 	"cloud.google.com/go/storage"
-	"github.com/cloudfoundry/bosh-gcscli/client"
-	"github.com/cloudfoundry/bosh-gcscli/config"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+
+	"github.com/cloudfoundry/bosh-gcscli/client"
+	"github.com/cloudfoundry/bosh-gcscli/config"
 )
 
 var _ = Describe("GCS Public Bucket", func() {
@@ -76,7 +77,7 @@ var _ = Describe("GCS Public Bucket", func() {
 			It("can get", func() {
 				tmpLocalFile, err := os.CreateTemp("", "gcscli-download")
 				Expect(err).ToNot(HaveOccurred())
-				defer os.Remove(tmpLocalFile.Name())
+				defer os.Remove(tmpLocalFile.Name()) //nolint:errcheck
 				Expect(tmpLocalFile.Close()).To(Succeed())
 
 				session, err := RunGCSCLI(gcsCLIPath, publicEnv.ConfigPath, "get", setupEnv.GCSFileName, tmpLocalFile.Name())
