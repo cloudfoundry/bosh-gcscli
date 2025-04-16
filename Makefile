@@ -34,9 +34,9 @@ lint:
 	@if ! command -v golangci-lint &> /dev/null; then \
 	  go_bin="$(go env GOPATH)/bin"; \
 	  export PATH=${go_bin}:${PATH}; \
-	  go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest; \
+	  go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest; \
 	fi; \
-	golangci-lint run --enable goimports ./...
+	golangci-lint run ./...
 
 # Generate a $StorageClass.lock which contains our bucket name
 # used for testing. Buckets must be unique among all in GCS,
