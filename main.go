@@ -25,9 +25,10 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/net/context"
+
 	"github.com/cloudfoundry/bosh-gcscli/client"
 	"github.com/cloudfoundry/bosh-gcscli/config"
-	"golang.org/x/net/context"
 )
 
 var version = "dev"
@@ -142,7 +143,7 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		defer sourceFile.Close()
+		defer sourceFile.Close() //nolint:errcheck
 		err = blobstoreClient.Put(sourceFile, dst)
 		fmt.Println(err)
 	case "get":
@@ -157,7 +158,7 @@ func main() {
 			log.Fatalln(err)
 		}
 
-		defer dstFile.Close()
+		defer dstFile.Close() //nolint:errcheck
 		err = blobstoreClient.Get(src, dstFile)
 	case "delete":
 		if len(nonFlagArgs) != 2 {
@@ -199,7 +200,7 @@ func main() {
 		url := ""
 		url, err = blobstoreClient.Sign(id, action, expiryDuration)
 		if err == nil {
-			os.Stdout.WriteString(url)
+			os.Stdout.WriteString(url) //nolint:errcheck
 		}
 
 	default:
