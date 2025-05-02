@@ -195,9 +195,9 @@ resources:
   - name: bosh-gcscli-dockerfile
     type: docker-image
     source:
-      repository: bosh/bosh-gcscli
-      username: ((dockerhub_username))
-      password: ((dockerhub_password))
+      repository: ghcr.io/cloudfoundry/bosh-gcscli
+      username: ((github_read_write_packages.username))
+      password: ((github_read_write_packages.password))
 
   - name: bosh-golang-release-image
     type: docker-image
