@@ -2,7 +2,7 @@
 platform: linux
 image_resource:
   type: docker-image
-  source: {repository: bosh/bosh-gcscli}
+  source: {repository: ghcr.io/cloudfoundry/bosh-gcscli}
 inputs:
 - name: gcscli-src
   path: bosh-gcscli

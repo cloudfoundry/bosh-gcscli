@@ -4,11 +4,11 @@ jobs:
     - trigger: true
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
-    - get: bosh-gcscli-dockerfile
+    - get: bosh-gcscli-docker-image
       trigger: true
 
     - task: unit-tests
-      image: bosh-gcscli-dockerfile
+      image: bosh-gcscli-docker-image
       file: gcscli-src/ci/tasks/run-unit.yml
 
   - name: run-unit-main
@@ -18,11 +18,11 @@ jobs:
       resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
-    - get: bosh-gcscli-dockerfile
+    - get: bosh-gcscli-docker-image
       trigger: true
 
     - task: unit-tests
-      image: bosh-gcscli-dockerfile
+      image: bosh-gcscli-docker-image
       file: gcscli-src/ci/tasks/run-unit.yml
 
   - name: run-fast-int-develop
@@ -30,11 +30,11 @@ jobs:
     - trigger: true
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
-    - get: bosh-gcscli-dockerfile
+    - get: bosh-gcscli-docker-image
       trigger: true
 
     - task: fast-integration-tests
-      image: bosh-gcscli-dockerfile
+      image: bosh-gcscli-docker-image
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
         google_json_key_data: ((gcp_service_key_json))
@@ -46,11 +46,11 @@ jobs:
       resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
-    - get: bosh-gcscli-dockerfile
+    - get: bosh-gcscli-docker-image
       trigger: true
 
     - task: fast-integration-tests
-      image: bosh-gcscli-dockerfile
+      image: bosh-gcscli-docker-image
       file: gcscli-src/ci/tasks/run-fast-int.yml
       params:
         google_json_key_data: ((gcp_service_key_json))
@@ -60,11 +60,11 @@ jobs:
     - trigger: true
       get: gcscli-src
       resource: bosh-gcscli-src-in-develop
-    - get: bosh-gcscli-dockerfile
+    - get: bosh-gcscli-docker-image
       trigger: true
 
     - task: full-integration-tests
-      image: bosh-gcscli-dockerfile
+      image: bosh-gcscli-docker-image
       file: gcscli-src/ci/tasks/run-int.yml
       params:
         google_json_key_data: ((gcp_service_key_json))
@@ -76,11 +76,11 @@ jobs:
       resource: bosh-gcscli-src-in-main
       passed:
       - promote-develop
-    - get: bosh-gcscli-dockerfile
+    - get: bosh-gcscli-docker-image
       trigger: true
 
     - task: full-integration-tests
-      image: bosh-gcscli-dockerfile
+      image: bosh-gcscli-docker-image
       file: gcscli-src/ci/tasks/run-int.yml
       params:
         google_json_key_data: ((gcp_service_key_json))
@@ -95,7 +95,7 @@ jobs:
         - run-unit-main
         - run-fast-int-main
         - run-int-main
-      - get: bosh-gcscli-dockerfile
+      - get: bosh-gcscli-docker-image
         trigger: true
         passed:
           - run-unit-main
@@ -108,14 +108,14 @@ jobs:
           bump: patch
     - in_parallel:
       - task: build-linux
-        image: bosh-gcscli-dockerfile
+        image: bosh-gcscli-docker-image
         file: gcscli-src/ci/tasks/build.yml
         output_mapping:
           out: out-linux
         params:
           GOOS: linux
       - task: build-windows
-        image: bosh-gcscli-dockerfile
+        image: bosh-gcscli-docker-image
         file: gcscli-src/ci/tasks/build.yml
         output_mapping:
           out: out-windows
@@ -157,7 +157,7 @@ jobs:
         resource: bosh-gcscli-src-in-develop
       - get: bosh-golang-release-image
         trigger: true
-      - put: bosh-gcscli-dockerfile
+      - put: bosh-gcscli-docker-image
         params:
           build: gcscli-src/ci/docker-image
 
@@ -192,7 +192,7 @@ resource_types:
     tag: 1.6
 
 resources:
-  - name: bosh-gcscli-dockerfile
+  - name: bosh-gcscli-docker-image
     type: docker-image
     source:
       repository: ghcr.io/cloudfoundry/bosh-gcscli
@@ -202,9 +202,9 @@ resources:
   - name: bosh-golang-release-image
     type: docker-image
     source:
-      repository: bosh/golang-release
-      username: ((dockerhub_username))
-      password: ((dockerhub_password))
+      repository: ghcr.io/cloudfoundry/golang-release
+      username: ((github_read_write_packages.username))
+      password: ((github_read_write_packages.password))
 
   - name: bosh-gcscli-src-in-develop
     type: git
