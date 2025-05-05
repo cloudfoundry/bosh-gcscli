@@ -160,6 +160,8 @@ jobs:
       - put: bosh-gcscli-docker-image
         params:
           build: gcscli-src/ci/docker-image
+          labels:
+            org.opencontainers.image.source: https://github.com/cloudfoundry/bosh-gcscli
 
   - name: bump-deps
     plan:
