@@ -3,7 +3,7 @@ module github.com/cloudfoundry/bosh-gcscli
 go 1.23.0
 
 require (
-	cloud.google.com/go/storage v1.55.0
+	cloud.google.com/go/storage v1.56.0
 	github.com/onsi/ginkgo/v2 v2.23.4
 	github.com/onsi/gomega v1.38.0
 	golang.org/x/net v0.42.0
