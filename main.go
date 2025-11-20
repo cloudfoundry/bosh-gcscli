@@ -17,6 +17,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -24,8 +25,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"golang.org/x/net/context"
 
 	"github.com/cloudfoundry/bosh-gcscli/client"
 	"github.com/cloudfoundry/bosh-gcscli/config"
