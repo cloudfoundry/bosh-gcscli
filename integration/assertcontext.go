@@ -17,13 +17,13 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"os"
 
 	"github.com/cloudfoundry/bosh-gcscli/config"
 
 	. "github.com/onsi/gomega" //nolint:staticcheck
-	"golang.org/x/net/context"
 )
 
 // GoogleAppCredentialsEnv is the environment variable
@@ -110,12 +110,11 @@ func (ctx *AssertContext) AddConfig(config *config.GCSCli) {
 // The behavior for an AssertContextAuthOption is applied when config is added
 type AssertContextConfigOption func(ctx *AssertContext)
 
-// AsReadOnlyCredentials configures the AssertContext to be used soley for
+// AsReadOnlyCredentials configures the AssertContext to be used solely for
 // public, read-only operations.
 func AsReadOnlyCredentials(ctx *AssertContext) {
 	conf := ctx.Config
-	Expect(conf).ToNot(BeNil(),
-		"cannot set read-only AssertContext without config")
+	Expect(conf).ToNot(BeNil(), "cannot set read-only AssertContext without config")
 
 	conf.CredentialsSource = config.NoneCredentialsSource
 	conf.ServiceAccountFile = ""
@@ -125,8 +124,7 @@ func AsReadOnlyCredentials(ctx *AssertContext) {
 // using a Service Account File
 func AsStaticCredentials(ctx *AssertContext) {
 	conf := ctx.Config
-	Expect(conf).ToNot(BeNil(),
-		"cannot set static AssertContext without config")
+	Expect(conf).ToNot(BeNil(), "cannot set static AssertContext without config")
 
 	conf.ServiceAccountFile = ctx.serviceAccountFile
 	conf.CredentialsSource = config.ServiceAccountFileCredentialsSource
@@ -137,8 +135,7 @@ func AsStaticCredentials(ctx *AssertContext) {
 // testing service account file.
 func AsDefaultCredentials(ctx *AssertContext) {
 	conf := ctx.Config
-	Expect(conf).ToNot(BeNil(),
-		"cannot set static AssertContext without config")
+	Expect(conf).ToNot(BeNil(), "cannot set static AssertContext without config")
 
 	tempFile, err := os.CreateTemp("", "bosh-gcscli-service-account-file")
 	Expect(err).ToNot(HaveOccurred())
