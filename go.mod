@@ -7,13 +7,13 @@ require (
 	github.com/onsi/ginkgo/v2 v2.27.3
 	github.com/onsi/gomega v1.38.3
 	golang.org/x/oauth2 v0.34.0
-	google.golang.org/api v0.257.0
+	google.golang.org/api v0.258.0
 )
 
 require (
 	cel.dev/expr v0.25.1 // indirect
 	cloud.google.com/go v0.123.0 // indirect
-	cloud.google.com/go/auth v0.17.0 // indirect
+	cloud.google.com/go/auth v0.18.0 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	cloud.google.com/go/iam v1.5.3 // indirect
@@ -36,7 +36,7 @@ require (
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.7 // indirect
-	github.com/googleapis/gax-go/v2 v2.15.0 // indirect
+	github.com/googleapis/gax-go/v2 v2.16.0 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

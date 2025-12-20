@@ -7,7 +7,7 @@ cloud.google.com/go/internal
 cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
-# cloud.google.com/go/auth v0.17.0
+# cloud.google.com/go/auth v0.18.0
 ## explicit; go 1.24.0
 cloud.google.com/go/auth
 cloud.google.com/go/auth/credentials
@@ -176,8 +176,8 @@ github.com/google/uuid
 ## explicit; go 1.23.0
 github.com/googleapis/enterprise-certificate-proxy/client
 github.com/googleapis/enterprise-certificate-proxy/client/util
-# github.com/googleapis/gax-go/v2 v2.15.0
-## explicit; go 1.23.0
+# github.com/googleapis/gax-go/v2 v2.16.0
+## explicit; go 1.24.0
 github.com/googleapis/gax-go/v2
 github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
@@ -399,13 +399,14 @@ golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typeparams
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/api v0.257.0
+# google.golang.org/api v0.258.0
 ## explicit; go 1.24.0
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
 google.golang.org/api/iamcredentials/v1
 google.golang.org/api/internal
 google.golang.org/api/internal/cert
+google.golang.org/api/internal/credentialstype
 google.golang.org/api/internal/gensupport
 google.golang.org/api/internal/impersonate
 google.golang.org/api/internal/third_party/uritemplates
