@@ -157,11 +157,27 @@ jobs:
         resource: bosh-gcscli-src-in-develop
       - get: bosh-golang-release-image
         trigger: true
+      - task: build-image
+        privileged: true
+        config:
+          platform: linux
+          image_resource:
+            type: registry-image
+            source:
+              repository: concourse/oci-build-task
+          inputs:
+            - name: gcscli-src
+          outputs:
+            - name: image
+          params:
+            CONTEXT: gcscli-src/ci/docker-image
+            LABELS: org.opencontainers.image.source=https://github.com/cloudfoundry/bosh-gcscli
+          run:
+            path: build
       - put: bosh-gcscli-image
+        no_get: true
         params:
-          build: gcscli-src/ci/docker-image
-          labels:
-            org.opencontainers.image.source: https://github.com/cloudfoundry/bosh-gcscli
+          image: image/image.tar
 
   - name: bump-deps
     plan:
@@ -198,9 +214,10 @@ resource_types:
 
 resources:
   - name: bosh-gcscli-image
-    type: docker-image
+    type: registry-image
     source:
       repository: ghcr.io/cloudfoundry/bosh/gcscli
+      tag: latest
       username: ((github_read_write_packages.username))
       password: ((github_read_write_packages.password))
 
