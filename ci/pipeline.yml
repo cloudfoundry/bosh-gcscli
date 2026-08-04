@@ -1,6 +1,5 @@
 jobs:
   - name: run-unit
-    old_name: run-unit-main
     plan:
     - trigger: true
       get: gcscli-src
@@ -12,7 +11,6 @@ jobs:
       file: gcscli-src/ci/tasks/run-unit.yml
 
   - name: run-fast-int
-    old_name: run-fast-int-main
     plan:
     - trigger: true
       get: gcscli-src
@@ -26,7 +24,6 @@ jobs:
         google_json_key_data: ((gcp_service_key_json))
 
   - name: run-int
-    old_name: run-int-main
     plan:
     - trigger: true
       get: gcscli-src
@@ -40,7 +37,6 @@ jobs:
         google_json_key_data: ((gcp_service_key_json))
 
   - name: promote
-    old_name: promote-main
     plan:
     - in_parallel:
       - get: gcscli-src
