@@ -1,9 +1,9 @@
 jobs:
-  - name: run-unit-develop
+  - name: run-unit
+    old_name: run-unit-main
     plan:
     - trigger: true
       get: gcscli-src
-      resource: bosh-gcscli-src-in-develop
     - get: bosh-gcscli-image
       trigger: true
 
@@ -11,25 +11,11 @@ jobs:
       image: bosh-gcscli-image
       file: gcscli-src/ci/tasks/run-unit.yml
 
-  - name: run-unit-main
+  - name: run-fast-int
+    old_name: run-fast-int-main
     plan:
     - trigger: true
       get: gcscli-src
-      resource: bosh-gcscli-src-in-main
-      passed:
-      - promote-develop
-    - get: bosh-gcscli-image
-      trigger: true
-
-    - task: unit-tests
-      image: bosh-gcscli-image
-      file: gcscli-src/ci/tasks/run-unit.yml
-
-  - name: run-fast-int-develop
-    plan:
-    - trigger: true
-      get: gcscli-src
-      resource: bosh-gcscli-src-in-develop
     - get: bosh-gcscli-image
       trigger: true
 
@@ -39,27 +25,11 @@ jobs:
       params:
         google_json_key_data: ((gcp_service_key_json))
 
-  - name: run-fast-int-main
+  - name: run-int
+    old_name: run-int-main
     plan:
     - trigger: true
       get: gcscli-src
-      resource: bosh-gcscli-src-in-main
-      passed:
-      - promote-develop
-    - get: bosh-gcscli-image
-      trigger: true
-
-    - task: fast-integration-tests
-      image: bosh-gcscli-image
-      file: gcscli-src/ci/tasks/run-fast-int.yml
-      params:
-        google_json_key_data: ((gcp_service_key_json))
-
-  - name: run-int-develop
-    plan:
-    - trigger: true
-      get: gcscli-src
-      resource: bosh-gcscli-src-in-develop
     - get: bosh-gcscli-image
       trigger: true
 
@@ -69,41 +39,25 @@ jobs:
       params:
         google_json_key_data: ((gcp_service_key_json))
 
-  - name: run-int-main
-    plan:
-    - trigger: true
-      get: gcscli-src
-      resource: bosh-gcscli-src-in-main
-      passed:
-      - promote-develop
-    - get: bosh-gcscli-image
-      trigger: true
-
-    - task: full-integration-tests
-      image: bosh-gcscli-image
-      file: gcscli-src/ci/tasks/run-int.yml
-      params:
-        google_json_key_data: ((gcp_service_key_json))
-
-  - name: promote-main
+  - name: promote
+    old_name: promote-main
     plan:
     - in_parallel:
       - get: gcscli-src
-        resource: bosh-gcscli-src-in-main
+
         trigger: true
         passed:
-        - run-unit-main
-        - run-fast-int-main
-        - run-int-main
+        - run-unit
+        - run-fast-int
+        - run-int
       - get: bosh-gcscli-image
         trigger: true
         passed:
-          - run-unit-main
-          - run-fast-int-main
-          - run-int-main
+          - run-unit
+          - run-fast-int
+          - run-int
 
       - put: version-semver
-        resource: version-semver-main
         params:
           bump: patch
     - in_parallel:
@@ -123,11 +77,9 @@ jobs:
           GOOS: windows
     - in_parallel:
       - put: release-bucket-linux
-        resource: release-bucket-linux-main
         params:
           file: out-linux/bosh-gcscli-*-linux-amd64
       - put: release-bucket-windows
-        resource: release-bucket-windows-main
         params:
           file: out-windows/bosh-gcscli-*-windows-amd64.exe
     - params:
@@ -135,26 +87,10 @@ jobs:
         tag: version-semver/number
         tag_prefix: v
       put: gcscli-src
-      resource: bosh-gcscli-src-in-main
-
-  - name: promote-develop
-    plan:
-    - get: gcscli-src
-      resource: bosh-gcscli-src-in-develop
-      trigger: true
-      passed:
-      - run-unit-develop
-      - run-fast-int-develop
-      - run-int-develop
-    - put: gcs-cli
-      resource: bosh-gcscli-src-in-main
-      params:
-        repository: gcscli-src
 
   - name: build-docker
     plan:
       - get: gcscli-src
-        resource: bosh-gcscli-src-in-develop
       - get: bosh-golang-release-image
         trigger: true
       - task: build-image
@@ -183,7 +119,6 @@ jobs:
     plan:
     - in_parallel:
       - get: gcscli-src
-        resource: bosh-gcscli-src-in-develop
       - get: golang-release
       - get: weekly
         trigger: true
@@ -200,7 +135,7 @@ jobs:
       image: bosh-gcscli-image
       input_mapping:
         gcscli-src: bumped-gcscli-src
-    - put: bosh-gcscli-src-in-develop
+    - put: gcscli-src
       params:
         repository: bumped-gcscli-src
         rebase: true
@@ -228,14 +163,7 @@ resources:
       username: ((github_read_write_packages.username))
       password: ((github_read_write_packages.password))
 
-  - name: bosh-gcscli-src-in-develop
-    type: git
-    source:
-      uri: git@github.com:cloudfoundry/bosh-gcscli.git
-      branch: develop
-      private_key: ((github_deploy_key_bosh-gcscli.private_key))
-
-  - name: bosh-gcscli-src-in-main
+  - name: gcscli-src
     type: git
     source:
       uri: git@github.com:cloudfoundry/bosh-gcscli.git
@@ -247,7 +175,7 @@ resources:
     source:
       uri: https://github.com/cloudfoundry/bosh-package-golang-release.git
 
-  - name: version-semver-main
+  - name: version-semver
     type: semver
     source:
       initial_version: 0.0.1
@@ -256,7 +184,7 @@ resources:
       access_key_id: ((bosh_gcscli_pipeline.username))
       secret_access_key: ((bosh_gcscli_pipeline.password))
 
-  - name: release-bucket-linux-main
+  - name: release-bucket-linux
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-linux-amd64
@@ -264,7 +192,7 @@ resources:
       access_key_id: ((bosh_gcscli_pipeline.username))
       secret_access_key: ((bosh_gcscli_pipeline.password))
 
-  - name: release-bucket-windows-main
+  - name: release-bucket-windows
     type: s3
     source:
       regexp: bosh-gcscli-(.*)-windows-amd64\.exe

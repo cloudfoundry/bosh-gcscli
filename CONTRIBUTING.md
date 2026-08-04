@@ -10,13 +10,13 @@ including your gem version, Ruby version, and operating system. Ideally, a bug r
 ## Submitting a Pull Request
 You can add a feature or bug-fix via pull request.
 1. Fork the project
-1. Create a branch for your feature or fix from the `develop` branch. Replace `your-feature-name` with a description of your feature or fix:
+1. Create a branch for your feature or fix from the `main` branch. Replace `your-feature-name` with a description of your feature or fix:
    ```
-   git checkout -b your-feature-name develop
+   git checkout -b your-feature-name main
    ```
 1. Implement your feature or bug fix
 1. Commit and push your changes
-1. Submit a pull request to the `develop` branch of the [bosh-gcscli] repository. PRs to the main branch are not accepted.
+1. Submit a pull request to the `main` branch of the [bosh-gcscli] repository. PRs to the main branch are not accepted.
 1. Unit tests and a BOSH release are created for each PR. You should see the status of your PR change to "pending" within a few minutes of submitting it, and then to "passed" or "failed" within 10 minutes.
 
 [bosh-gcscli]: https://github.com/cloudfoundry/bosh-gcscli/
