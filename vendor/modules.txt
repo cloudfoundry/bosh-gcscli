@@ -3,7 +3,6 @@
 cel.dev/expr
 # cloud.google.com/go v0.123.0
 ## explicit; go 1.24.0
-cloud.google.com/go/internal
 cloud.google.com/go/internal/optional
 cloud.google.com/go/internal/trace
 cloud.google.com/go/internal/version
@@ -35,23 +34,27 @@ cloud.google.com/go/auth/oauth2adapt
 # cloud.google.com/go/compute/metadata v0.10.0
 ## explicit; go 1.26.0
 cloud.google.com/go/compute/metadata
-# cloud.google.com/go/iam v1.14.0
+# cloud.google.com/go/iam v1.15.0
 ## explicit; go 1.26.0
 cloud.google.com/go/iam
 cloud.google.com/go/iam/apiv1/iampb
-# cloud.google.com/go/monitoring v1.31.0
+# cloud.google.com/go/logging v1.21.0
+## explicit; go 1.26.0
+# cloud.google.com/go/longrunning v1.4.0
+## explicit; go 1.26.0
+# cloud.google.com/go/monitoring v1.32.0
 ## explicit; go 1.26.0
 cloud.google.com/go/monitoring/apiv3/v2
 cloud.google.com/go/monitoring/apiv3/v2/monitoringpb
 cloud.google.com/go/monitoring/internal
-# cloud.google.com/go/storage v1.69.0
+# cloud.google.com/go/storage v1.70.0
 ## explicit; go 1.26.0
 cloud.google.com/go/storage
 cloud.google.com/go/storage/experimental
 cloud.google.com/go/storage/internal
 cloud.google.com/go/storage/internal/apiv2
 cloud.google.com/go/storage/internal/apiv2/storagepb
-# cloud.google.com/go/trace v1.17.0
+# cloud.google.com/go/trace v1.18.0
 ## explicit; go 1.26.0
 # github.com/GoogleCloudPlatform/opentelemetry-operations-go/exporter/metric v0.62.0
 ## explicit; go 1.26.0
@@ -126,7 +129,7 @@ github.com/envoyproxy/protoc-gen-validate/validate
 # github.com/felixge/httpsnoop v1.1.0
 ## explicit; go 1.25
 github.com/felixge/httpsnoop
-# github.com/gkampitakis/go-snaps v0.5.23
+# github.com/gkampitakis/go-snaps v0.5.24
 ## explicit; go 1.23
 # github.com/go-jose/go-jose/v4 v4.1.6
 ## explicit; go 1.24.0
@@ -179,7 +182,7 @@ github.com/google/s2a-go/stream
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
-# github.com/googleapis/enterprise-certificate-proxy v0.3.23
+# github.com/googleapis/enterprise-certificate-proxy v0.3.24
 ## explicit; go 1.25.0
 github.com/googleapis/enterprise-certificate-proxy/client
 github.com/googleapis/enterprise-certificate-proxy/client/util
@@ -429,7 +432,7 @@ golang.org/x/tools/internal/pkgbits
 golang.org/x/tools/internal/stdlib
 golang.org/x/tools/internal/typesinternal
 golang.org/x/tools/internal/versions
-# google.golang.org/api v0.307.0
+# google.golang.org/api v0.308.0
 ## explicit; go 1.26.0
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
