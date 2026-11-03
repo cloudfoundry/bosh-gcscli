@@ -1,6 +1,6 @@
 # bosh-gcscli
 
-In order to run the bosh-gcscli Concourse Pipeline you must have an existing [Concourse](http://concourse.ci) environment. See [Deploying Concourse on Google Compute Engine](https://github.com/cloudfoundry-incubator/bosh-google-cpi-release/blob/master/docs/deploy_concourse.md) for instructions.
+In order to run the bosh-gcscli Concourse Pipeline you must have an existing [Concourse](http://concourse.ci) environment. See [Deploying Concourse on Google Compute Engine](https://github.com/cloudfoundry-incubator/bosh-google-cpi-release/blob/main/docs/deploy_concourse.md) for instructions.
 
 * Target your Concourse CI environment:
 
